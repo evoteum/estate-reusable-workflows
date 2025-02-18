@@ -1,0 +1,178 @@
+name: apply multiple tofu environments
+# This approach ensures that,
+# - additional environments can be added without changing the workflow.
+# - new environments are initialised with state file; see https://github.com/opentofu/opentofu/issues/2518
+# - changes are applied to all environments separately.
+
+on:
+  workflow_call:
+
+permissions:
+  id-token: write
+  contents: write
+  actions: write
+
+jobs:
+  get-changed-environments:
+    runs-on: ubuntu-latest
+    outputs:
+      environments: ${{ steps.get-changed-files.outputs.CHANGED_DIRS }}
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 2
+        sparse-checkout: |
+          tofu/
+
+    - name: Get changed files
+      run: |
+        MAIN_WORKING_DIRECTORY=$pwd
+        echo "Root directory: $MAIN_WORKING_DIRECTORY"
+        CHANGED_FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.event.after }})
+        echo "Changed files:"
+        echo "$CHANGED_FILES"
+        CHANGED_DIRS=$(for file in $CHANGED_FILES; do
+          dirname "$file"
+        done | sort | uniq)
+        echo "Changed directories:"
+        echo "$CHANGED_DIRS"
+        echo "setting env var"
+        echo "CHANGED_DIRS=$(echo $CHANGED_DIRS)" >> $GITHUB_OUTPUT
+
+  tofu-run:
+    needs: get-changed-environments
+    runs-on: ubuntu-latest
+    strategy:
+        matrix:
+            environments: ${{fromJson(needs.get-changed-environments.outputs.environments)}}
+    env:
+      GITHUB_APP_ID: ${{ secrets.EVOTEUMBOT_APP_ID }}
+      GITHUB_APP_INSTALLATION_ID: ${{ secrets.EVOTEUMBOT_APP_INSTALLATION_ID }}
+      GITHUB_APP_PEM_FILE: ${{ secrets.EVOTEUMBOT_APP_PEM_FILE }}
+      TF_VAR_aws_region: ${{ vars.AWS_REGION }}
+      TF_VAR_org_name: ${{ github.repository_owner }}
+      TF_VAR_repo_name: ${{ github.event.repository.name }}
+      TF_VAR_repo_url: ${{ github.event.repository.html_url }}
+
+    steps:
+      # Install workflow requirements
+      - name: set additional env vars
+        run: |
+          export ENVIRONMENT=$(basename "${{ matrix.environments }}")
+          echo "ENVIRONMENT=$ENVIRONMENT" >> $GITHUB_ENV
+          echo "STATE_FILE_KEY=${{ github.event.repository.name }}/$ENVIRONMENT/tofu.tfstate" >> $GITHUB_ENV
+
+      - name: Set up OpenTofu
+        uses: opentofu/setup-opentofu@v1
+        with:
+          tofu_version: 1.9.0
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          audience: sts.amazonaws.com
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          role-session-name: ${{ github.event.repository.name }}--${{ github.workflow }}--${{ github.run_number }}--${{ github.job }}
+
+      # For new environments, we need to force the creation of a new state file using the minimal bootstrap configuration.
+      - name: Check state file existence
+        run: |
+          STATE_FILE_EXISTS_VAR=${{ github.event.repository.name }}-$ENVIRONMENT-tfstate-exists
+          echo "STATE_FILE_EXISTS_VAR=$STATE_FILE_EXISTS_VAR" >> $GITHUB_ENV
+          if ! gh variable get $STATE_FILE_EXISTS_VAR; then
+            echo "State file does not exist"
+            echo "STATE_FILE_EXISTS=false" >> $GITHUB_ENV
+            exit 0
+          fi 
+          echo "State file exists"
+          echo "STATE_FILE_EXISTS=true" >> $GITHUB_ENV
+
+      - name: Checkout bootstrap repository
+        if: steps.check-state-file-existence.outputs.STATE_FILE_EXISTS != 'true'
+        uses: actions/checkout@v4
+        with:
+          repository: evoteum/tofu-modules
+          sparse-checkout: common/bootstrap
+          fetch-depth: 1
+
+      - name: initialise tofu in boostrap
+        if: steps.check-state-file-existence.outputs.STATE_FILE_EXISTS != 'true'
+        run: |
+          cd tofu-modules/common/bootstrap
+          echo "Running tofu bootstrap init for environment: $ENVIRONMENT"
+          tofu init \
+            -input=false \
+            -backend-config="bucket=${{ secrets.TOFU_STATE_BUCKET_NAME }}" \
+            -backend-config="key=$STATE_FILE_KEY" \
+            -backend-config="region=${{ vars.AWS_REGION }}"
+
+      - name: Apply OpenTofu bootstrap configuration
+        if: steps.check-state-file-existence.outputs.STATE_FILE_EXISTS != 'true'
+        id: tofu-plan
+        run: |
+          echo "Applying initial tofu configuration for environment: $ENVIRONMENT"
+          cd tofu-modules/common/bootstrap
+          tofu apply -auto-approve      
+
+      - name: Set state file existence
+        if: steps.check-state-file-existence.outputs.STATE_FILE_EXISTS != 'true'
+        run: |
+          aws s3api head-object --bucket ${{ secrets.TOFU_STATE_BUCKET_NAME }} --key "$STATE_FILE_KEY" || not_exist=true
+          if [ $not_exist ]; then
+            echo "state file still does not exist! PANIC!"
+            exit 1
+          fi
+          echo "State file now exists"
+          gh variable set $STATE_FILE_EXISTS_VAR -b true
+
+
+      # Now that we have confirmed we have a state file, we can proceed with the normal workflow.
+      # Could be improved by using a separate workflow for the bootstrap process, allowing us to repeat
+      # the tofu apply against the different configurations.
+      - name: Checkout this repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          sparse-checkout: ${{ matrix.environments }}
+
+      - name: initialise tofu
+        run: |
+            echo "===== Processing Environment: ${{ github.event.repository.name }}/$ENVIRONMENT ====="
+            cd ${{ matrix.environments }}
+            echo "Running tofu init for environment: $ENVIRONMENT"
+            tofu init \
+              -input=false \
+              -backend-config="bucket=${{ secrets.TOFU_STATE_BUCKET_NAME }}" \
+              -backend-config="key=$STATE_FILE_KEY" \
+              -backend-config="region=${{ vars.AWS_REGION }}"
+
+      - name: Build OpenTofu Plan
+        id: tofu-plan
+        run: |
+          echo "Building tofu plan for environment  ${{ github.event.repository.name }}/$ENVIRONMENT"
+          cd ${{ matrix.environments }}
+          set -o pipefail
+          tofu plan -input=false -out=tfplan | tee plan.txt
+
+      - name: Check OpenTofu Plan
+        id: tofu-check-plan
+        run: |
+          echo "Checking tofu plan for environment:  ${{ github.event.repository.name }}/$ENVIRONMENT"
+          cd ${{ matrix.environments }}
+          tofu show -json tfplan > tfplan.json
+          if grep -q "No changes." plan.txt; then
+            echo "changes=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          echo "changes=true" >> $GITHUB_OUTPUT
+          # Further plan checks will be added here
+
+      - name: Apply OpenTofu plan
+        if: steps.tofu-check-plan.outputs.changes == 'true'
+        run: |
+          echo "Running tofu apply for environment: $ENVIRONMENT"
+          cd ${{ matrix.environments }}
+          tofu apply tfplan
+          echo "Finished processing environment: $ENVIRONMENT"
