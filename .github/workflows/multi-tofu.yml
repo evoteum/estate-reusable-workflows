@@ -38,7 +38,7 @@ jobs:
         echo "Changed directories:"
         echo "$CHANGED_DIRS"
         echo "setting env var"
-        echo "CHANGED_DIRS=$(echo $CHANGED_DIRS)" >> $GITHUB_OUTPUT
+        echo "CHANGED_DIRS=$(jq -cRs 'split("\n")[:-1]' <<< "$changed_dirs")" >> $GITHUB_OUTPUT
 
   tofu-run:
     needs: get-changed-environments
