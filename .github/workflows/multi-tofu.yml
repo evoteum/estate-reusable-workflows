@@ -61,7 +61,9 @@ jobs:
         run: |
           export ENVIRONMENT=$(basename "${{ matrix.environments }}")
           echo "ENVIRONMENT=$ENVIRONMENT" >> $GITHUB_ENV
+          echo "TF_VAR_environment=$ENVIRONMENT" >> $GITHUB_ENV
           echo "STATE_FILE_KEY=${{ github.event.repository.name }}/$ENVIRONMENT/tofu.tfstate" >> $GITHUB_ENV
+          
 
       - name: Set up OpenTofu
         uses: opentofu/setup-opentofu@v1
@@ -110,7 +112,7 @@ jobs:
 
       - name: Apply OpenTofu bootstrap configuration
         if: steps.check-state-file-existence.outputs.STATE_FILE_EXISTS != 'true'
-        id: tofu-plan
+        id: tofu-bootstrap-plan
         run: |
           echo "Applying initial tofu configuration for environment: $ENVIRONMENT"
           cd tofu-modules/common/bootstrap
