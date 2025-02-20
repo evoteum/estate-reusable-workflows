@@ -33,7 +33,7 @@ jobs:
         echo "$CHANGED_FILES"
         CHANGED_DIRS=$(for file in $CHANGED_FILES; do
           dirname "$file"
-        done | sort | uniq )
+        done | sort | uniq | jq -Rsc)
         echo "Changed directories:"
         echo "$CHANGED_DIRS"
         echo "setting env var"
