@@ -32,11 +32,12 @@ jobs:
         echo "Changed files:"
         echo "$CHANGED_FILES"
         CHANGED_DIRS=$(for file in $CHANGED_FILES; do
+          echo "file: $file"
           if [ -z "$file" ]; then
             continue
           fi
           dirname "$file"
-        done | sort | uniq | jq -R -s -c 'split("\n")')
+        done | sort | uniq | jq -Rsc 'split("\n")')
         echo "Changed directories:"
         echo "$CHANGED_DIRS"
         echo "setting env var"
