@@ -1,4 +1,5 @@
-name: apply multiple tofu environments
+name: deploy_tofu
+# Deploy all changes to all environments.
 # This approach ensures that,
 # - additional environments can be added without changing the workflow.
 # - new environments are initialised with state file; see https://github.com/opentofu/opentofu/issues/2518
@@ -6,6 +7,13 @@ name: apply multiple tofu environments
 
 on:
   workflow_call:
+    inputs:
+      fail-fast:
+        description: 'If true, cancel all in-progress and queued jobs in the matrix if any job in the matrix fails.'
+        required: false
+        default: true
+        type: boolean
+
 
 permissions:
   id-token: write
@@ -43,8 +51,9 @@ jobs:
     needs: get-changed-environments
     runs-on: ubuntu-latest
     strategy:
-        matrix:
-            environment: ${{ fromJSON(needs.get-changed-environments.outputs.environments) }}
+      fail-fast: ${{ github.event.inputs.fail-fast }}
+      matrix:
+          environment: ${{ fromJSON(needs.get-changed-environments.outputs.environments) }}
     env:
       GITHUB_APP_ID: ${{ secrets.EVOTEUMBOT_APP_ID }}
       GITHUB_APP_INSTALLATION_ID: ${{ secrets.EVOTEUMBOT_APP_INSTALLATION_ID }}
