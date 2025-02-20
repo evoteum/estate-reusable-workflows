@@ -51,7 +51,7 @@ jobs:
     needs: get-changed-environments
     runs-on: ubuntu-latest
     strategy:
-      fail-fast: ${{ github.event.inputs.fail-fast }}
+      fail-fast: ${{ inputs.fail-fast }}
       matrix:
           environment: ${{ fromJSON(needs.get-changed-environments.outputs.environments) }}
     env:
