@@ -37,15 +37,18 @@ jobs:
         done | sort | uniq)
         echo "Changed directories:"
         echo "$CHANGED_DIRS"
+        echo "converting to json"
+        CHANGED_DIRS_JSON=$(jq -n --arg changed_dirs "$CHANGED_DIRS" '$changed_dirs')
+        echo "$CHANGED_DIRS_JSON"
         echo "setting env var"
-        echo "CHANGED_DIRS=$(jq -cRs 'split("\n")[:-1]' <<< "$changed_dirs")" >> $GITHUB_OUTPUT
+        echo "CHANGED_DIRS=$CHANGED_DIRS_JSON" >> $GITHUB_OUTPUT
 
   tofu-run:
     needs: get-changed-environments
     runs-on: ubuntu-latest
     strategy:
         matrix:
-            environments: ${{fromJson(needs.get-changed-environments.outputs.environments)}}
+            environment: ${{fromJson(needs.get-changed-environments.outputs.environments)}}
     env:
       GITHUB_APP_ID: ${{ secrets.EVOTEUMBOT_APP_ID }}
       GITHUB_APP_INSTALLATION_ID: ${{ secrets.EVOTEUMBOT_APP_INSTALLATION_ID }}
@@ -56,10 +59,9 @@ jobs:
       TF_VAR_repo_url: ${{ github.event.repository.html_url }}
 
     steps:
-      # Install workflow requirements
       - name: set additional env vars
         run: |
-          export ENVIRONMENT=$(basename "${{ matrix.environments }}")
+          export ENVIRONMENT=$(basename "${{ matrix.environment }}")
           echo "ENVIRONMENT=$ENVIRONMENT" >> $GITHUB_ENV
           echo "TF_VAR_environment=$ENVIRONMENT" >> $GITHUB_ENV
           echo "STATE_FILE_KEY=${{ github.event.repository.name }}/$ENVIRONMENT/tofu.tfstate" >> $GITHUB_ENV
@@ -81,12 +83,12 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
-          sparse-checkout: ${{ matrix.environments }}
+          sparse-checkout: ${{ matrix.environment }}
 
       - name: initialise tofu
         run: |
             echo "===== Processing Environment: ${{ github.event.repository.name }}/$ENVIRONMENT ====="
-            cd ${{ matrix.environments }}
+            cd ${{ matrix.environment }}
             echo "Running tofu init for environment: $ENVIRONMENT"
             tofu init \
               -input=false \
@@ -97,28 +99,27 @@ jobs:
       - name: Build OpenTofu Plan
         id: tofu-plan
         run: |
-          echo "Building tofu plan for environment  ${{ github.event.repository.name }}/$ENVIRONMENT"
-          cd ${{ matrix.environments }}
-          set -o pipefail
+          set -Eeuo pipefail
+          echo "Building tofu plan for environment: ${{ github.event.repository.name }}/$ENVIRONMENT"
+          cd ${{ matrix.environment }}
           tofu plan -input=false -out=tfplan | tee plan.txt
+          tofu show -json tfplan > tfplan.json
 
-      - name: Check OpenTofu Plan
+      - name: Check OpenTofu Plan for changes
         id: tofu-check-plan
         run: |
-          echo "Checking tofu plan for environment:  ${{ github.event.repository.name }}/$ENVIRONMENT"
-          cd ${{ matrix.environments }}
-          tofu show -json tfplan > tfplan.json
+          echo "Checking tofu plan for changes to environment:  ${{ github.event.repository.name }}/$ENVIRONMENT"
+          cd ${{ matrix.environment }}
           if grep -q "No changes." plan.txt; then
             echo "changes=false" >> $GITHUB_OUTPUT
             exit 0
           fi
           echo "changes=true" >> $GITHUB_OUTPUT
-          # Further plan checks will be added here
 
       - name: Apply OpenTofu plan
         if: steps.tofu-check-plan.outputs.changes == 'true'
         run: |
           echo "Running tofu apply for environment: $ENVIRONMENT"
-          cd ${{ matrix.environments }}
+          cd ${{ matrix.environment }}
           tofu apply tfplan
           echo "Finished processing environment: $ENVIRONMENT"
