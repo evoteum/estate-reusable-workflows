@@ -26,9 +26,8 @@ jobs:
           tofu/
 
     - name: Get changed files
+      id: get-changed-files
       run: |
-        MAIN_WORKING_DIRECTORY=$pwd
-        echo "Root directory: $MAIN_WORKING_DIRECTORY"
         CHANGED_FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.event.after }})
         echo "Changed files:"
         echo "$CHANGED_FILES"
@@ -37,18 +36,15 @@ jobs:
         done | sort | uniq)
         echo "Changed directories:"
         echo "$CHANGED_DIRS"
-        echo "converting to json"
-        CHANGED_DIRS_JSON=$(jq -n --arg changed_dirs "$CHANGED_DIRS" '$changed_dirs')
-        echo "$CHANGED_DIRS_JSON"
         echo "setting env var"
-        echo "CHANGED_DIRS=$CHANGED_DIRS_JSON" >> $GITHUB_OUTPUT
+        echo "CHANGED_DIRS=$CHANGED_DIRS" >> $GITHUB_OUTPUT
 
   tofu-run:
     needs: get-changed-environments
     runs-on: ubuntu-latest
     strategy:
         matrix:
-            environment: ${{fromJson(needs.get-changed-environments.outputs.environments)}}
+            environment: ${{ fromJson(needs.get-changed-environments.outputs.environments) }}
     env:
       GITHUB_APP_ID: ${{ secrets.EVOTEUMBOT_APP_ID }}
       GITHUB_APP_INSTALLATION_ID: ${{ secrets.EVOTEUMBOT_APP_INSTALLATION_ID }}
