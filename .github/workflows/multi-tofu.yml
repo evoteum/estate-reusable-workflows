@@ -63,7 +63,6 @@ jobs:
           echo "ENVIRONMENT=$ENVIRONMENT" >> $GITHUB_ENV
           echo "TF_VAR_environment=$ENVIRONMENT" >> $GITHUB_ENV
           echo "STATE_FILE_KEY=${{ github.event.repository.name }}/$ENVIRONMENT/tofu.tfstate" >> $GITHUB_ENV
-          
 
       - name: Set up OpenTofu
         uses: opentofu/setup-opentofu@v1
@@ -78,61 +77,6 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           role-session-name: ${{ github.event.repository.name }}--${{ github.workflow }}--${{ github.run_number }}--${{ github.job }}
 
-      # For new environments, we need to force the creation of a new state file using the minimal bootstrap configuration.
-      - name: Check state file existence
-        run: |
-          STATE_FILE_EXISTS_VAR=${{ github.event.repository.name }}-$ENVIRONMENT-tfstate-exists
-          echo "STATE_FILE_EXISTS_VAR=$STATE_FILE_EXISTS_VAR" >> $GITHUB_ENV
-          if ! gh variable get $STATE_FILE_EXISTS_VAR; then
-            echo "State file does not exist"
-            echo "STATE_FILE_EXISTS=false" >> $GITHUB_ENV
-            exit 0
-          fi 
-          echo "State file exists"
-          echo "STATE_FILE_EXISTS=true" >> $GITHUB_ENV
-
-      - name: Checkout bootstrap repository
-        if: steps.check-state-file-existence.outputs.STATE_FILE_EXISTS != 'true'
-        uses: actions/checkout@v4
-        with:
-          repository: evoteum/tofu-modules
-          sparse-checkout: common/bootstrap
-          fetch-depth: 1
-
-      - name: initialise tofu in boostrap
-        if: steps.check-state-file-existence.outputs.STATE_FILE_EXISTS != 'true'
-        run: |
-          cd tofu-modules/common/bootstrap
-          echo "Running tofu bootstrap init for environment: $ENVIRONMENT"
-          tofu init \
-            -input=false \
-            -backend-config="bucket=${{ secrets.TOFU_STATE_BUCKET_NAME }}" \
-            -backend-config="key=$STATE_FILE_KEY" \
-            -backend-config="region=${{ vars.AWS_REGION }}"
-
-      - name: Apply OpenTofu bootstrap configuration
-        if: steps.check-state-file-existence.outputs.STATE_FILE_EXISTS != 'true'
-        id: tofu-bootstrap-plan
-        run: |
-          echo "Applying initial tofu configuration for environment: $ENVIRONMENT"
-          cd tofu-modules/common/bootstrap
-          tofu apply -auto-approve      
-
-      - name: Set state file existence
-        if: steps.check-state-file-existence.outputs.STATE_FILE_EXISTS != 'true'
-        run: |
-          aws s3api head-object --bucket ${{ secrets.TOFU_STATE_BUCKET_NAME }} --key "$STATE_FILE_KEY" || not_exist=true
-          if [ $not_exist ]; then
-            echo "state file still does not exist! PANIC!"
-            exit 1
-          fi
-          echo "State file now exists"
-          gh variable set $STATE_FILE_EXISTS_VAR -b true
-
-
-      # Now that we have confirmed we have a state file, we can proceed with the normal workflow.
-      # Could be improved by using a separate workflow for the bootstrap process, allowing us to repeat
-      # the tofu apply against the different configurations.
       - name: Checkout this repository
         uses: actions/checkout@v4
         with:
