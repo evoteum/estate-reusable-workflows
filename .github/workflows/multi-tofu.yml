@@ -32,6 +32,9 @@ jobs:
         echo "Changed files:"
         echo "$CHANGED_FILES"
         CHANGED_DIRS=$(for file in $CHANGED_FILES; do
+          if [ -z "$file" ]; then
+            continue
+          fi
           dirname "$file"
         done | sort | uniq | jq -R -s -c 'split("\n")')
         echo "Changed directories:"
