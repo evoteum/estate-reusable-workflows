@@ -45,7 +45,7 @@ jobs:
         if [ ! -z "${{ inputs.environment-directories }}" ]; then
           echo "Getting environment directories from input"
           echo "got input: ${{ inputs.environment-directories }}"
-          ENVIRONMENT_DIRECTORIES_JSON=$(echo ${{ inputs.environments }} | jq -Rsc 'split("\n") | map(split(",")[]) | map(select(startswith("tofu/")))')
+          ENVIRONMENT_DIRECTORIES_JSON=$(echo ${{ inputs.environment-directories }} | jq -Rsc 'split("\n") | map(split(",")[]) | map(select(startswith("tofu/")))')
           echo "ENVIRONMENTS=$ENVIRONMENT_DIRECTORIES_JSON"
           echo "ENVIRONMENTS=$ENVIRONMENT_DIRECTORIES_JSON" >> $GITHUB_OUTPUT
           exit 0
