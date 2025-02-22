@@ -43,13 +43,13 @@ jobs:
       id: convert-to-json
       run: |
         if ${{ inputs.environment-directories }} != ''; then
-          echo "Getting input environments"
+          echo "Getting environment directories from input"
           ENVIRONMENT_DIRECTORIES_JSON=$(echo ${{ inputs.environments }} | jq -Rsc 'split("\n") | map(split(",")[]) | map(select(startswith("tofu/")))')
           echo "ENVIRONMENTS=$ENVIRONMENT_DIRECTORIES_JSON"
           echo "ENVIRONMENTS=$ENVIRONMENT_DIRECTORIES_JSON" >> $GITHUB_OUTPUT
           exit 0
         fi
-
+        echo "Getting environment directories from changed directories"
         CHANGED_FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.event.after }})
         echo "Changed files:"
         echo "$CHANGED_FILES"
