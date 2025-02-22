@@ -14,7 +14,7 @@ on:
         default: true
         type: boolean
       environments:
-        description: 'List of environments to apply changes to. If empty, all changed environments will be applied.'
+        description: 'JSON string list of environments to apply changes to. If empty, all changed environments will be applied.'
         required: false
         type: string
 
@@ -26,12 +26,14 @@ permissions:
 
 jobs:
   get-changed-environments:
-    if: ${{ inputs.environments }} != ""
+    if: ${{ inputs.environments }}
     runs-on: ubuntu-latest
     outputs:
       environments: ${{ steps.get-changed-files.outputs.CHANGED_DIRS }}
     steps:
+
     - name: Checkout repository
+      if: ${{ inputs.environments }}
       uses: actions/checkout@v4
       with:
         fetch-depth: 2
@@ -39,6 +41,7 @@ jobs:
           tofu/
 
     - name: Get changed files
+      if: ${{ inputs.environments }}
       id: get-changed-files
       run: |
         CHANGED_FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.event.after }})
@@ -58,7 +61,7 @@ jobs:
     strategy:
       fail-fast: ${{ inputs.fail-fast }}
       matrix:
-          environment: ${{ fromJSON(needs.get-changed-environments.outputs.environments) }}${{ inputs.environments }}
+          environment: ${{ fromJSON(needs.get-changed-environments.outputs.environments) }}${{ fromJSON(inputs.environments) }}
     env:
       GITHUB_APP_ID: ${{ secrets.EVOTEUMBOT_APP_ID }}
       GITHUB_APP_INSTALLATION_ID: ${{ secrets.EVOTEUMBOT_APP_INSTALLATION_ID }}
