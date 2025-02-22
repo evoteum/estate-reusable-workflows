@@ -13,6 +13,10 @@ on:
         required: false
         default: true
         type: boolean
+      environments:
+        description: 'List of environments to apply changes to. If empty, all changed environments will be applied.'
+        required: false
+        type: string
 
 
 permissions:
@@ -22,6 +26,7 @@ permissions:
 
 jobs:
   get-changed-environments:
+    if: ${{ inputs.environments }} != ""
     runs-on: ubuntu-latest
     outputs:
       environments: ${{ steps.get-changed-files.outputs.CHANGED_DIRS }}
@@ -53,7 +58,7 @@ jobs:
     strategy:
       fail-fast: ${{ inputs.fail-fast }}
       matrix:
-          environment: ${{ fromJSON(needs.get-changed-environments.outputs.environments) }}
+          environment: ${{ fromJSON(needs.get-changed-environments.outputs.environments) }}${{ inputs.environments }}
     env:
       GITHUB_APP_ID: ${{ secrets.EVOTEUMBOT_APP_ID }}
       GITHUB_APP_INSTALLATION_ID: ${{ secrets.EVOTEUMBOT_APP_INSTALLATION_ID }}
