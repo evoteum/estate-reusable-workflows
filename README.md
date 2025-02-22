@@ -35,7 +35,7 @@ Reusable GitHub Actions workflows
 [//]: # (Must not have its own title)
 [//]: # (A detailed description of the repo)
 
-
+This is our collection of [reusable GitHub Actions workflows](https://resources.github.com/learn/pathways/automation/intermediate/create-reusable-workflows-in-github-actions/). They are designed to be used across multiple repositories to ensure consistency and reduce duplication.
 
 The configuration of this repo is managed by OpenTofu in [estate-repos](https://github.com/evoteum/estate-repos).
 
@@ -45,20 +45,17 @@ The configuration of this repo is managed by OpenTofu in [estate-repos](https://
 [//]: # (Delete as appropriate)
 
 1. [Security](#security)
-1. [Background](#background)
 1. [Install](#install)
 1. [Usage](#usage)
-1. [Any extra sections as required]
-1. [API](#api)
-1. [Maintainers](#maintainers)
-1. [Thanks](#thanks)
 1. [Contributing](#contributing)
 1. [License](#license)
 
-[//]: # (## Security)
+## Security
 [//]: # (OPTIONAL)
 [//]: # (May go here if it is important to highlight security concerns.)
 
+Ensuring that our workflows are consistent across the estate is important for maintaining security and reliability.
+It ensures that all repositories are built and tested in the same way, reducing the risk of vulnerabilities.
 
 [//]: # (## Background)
 [//]: # (OPTIONAL)
@@ -70,13 +67,17 @@ The configuration of this repo is managed by OpenTofu in [estate-repos](https://
 [//]: # (OPTIONAL IF documentation repo)
 [//]: # (ELSE REQUIRED)
 
+Callable workflow are located in the `.github/workflows` directory. To use them in your repository, copy corresponding workflow in the `callers` directory to your repository's `.github/workflows` directory.
 
+Callers are the minimal workflows that call the reusable workflows. They are designed to be copied into your repository and should not be modified, other than input parameters.
+
+Our [estate-repos](https://github.com/evoteum/estate-repos) can be used to create new repositories with these workflows already included.
 
 ## Usage
 [//]: # (REQUIRED)
 [//]: # (Explain what the thing does. Use screenshots and/or videos.)
 
-
+Simply copy the caller workflow from the `callers` directory to your repository's `.github/workflows` directory. You can then modify the input parameters to suit your needs.
 
 [//]: # (Extra sections)
 [//]: # (OPTIONAL)
@@ -105,10 +106,6 @@ The configuration of this repo is managed by OpenTofu in [estate-repos](https://
 [//]: # (helped with the development of this project)
 
 
-
-<!-- !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! -->
-<!-- !!!!!   DO NOT EDIT BELOW THIS LINE   !!!!! -->
-<!-- !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! -->
 
 ## Contributing
 [//]: # (REQUIRED)
