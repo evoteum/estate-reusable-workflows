@@ -42,7 +42,7 @@ jobs:
     - name: Convert environment directories to JSON for matrix consumption
       id: convert-to-json
       run: |
-        if ${{ inputs.environment-directories }} != ''; then
+        if '${{ inputs.environment-directories }}' != ''; then
           echo "Getting environment directories from input"
           ENVIRONMENT_DIRECTORIES_JSON=$(echo ${{ inputs.environments }} | jq -Rsc 'split("\n") | map(split(",")[]) | map(select(startswith("tofu/")))')
           echo "ENVIRONMENTS=$ENVIRONMENT_DIRECTORIES_JSON"
