@@ -28,7 +28,7 @@ jobs:
   get-environment-directories:
     runs-on: ubuntu-latest
     outputs:
-      environments: ${{ steps.get-changed-files.outputs.CHANGED_DIRS }}
+      environments: ${{ steps.convert-to-json.outputs.ENVIRONMENTS }}
     steps:
 
     - name: Checkout repository
@@ -39,10 +39,17 @@ jobs:
         sparse-checkout: |
           tofu/
 
-    - name: Get changed files
-      if: ${{ inputs.environment-directories }} == ''
-      id: get-changed-files
+    - name: Convert environment directories to JSON for matrix consumption
+      id: convert-to-json
       run: |
+        if ${{ inputs.environment-directories }} != ''; then
+          echo "Getting input environments"
+          ENVIRONMENT_DIRECTORIES_JSON=$(echo ${{ inputs.environments }} | jq -Rsc 'split("\n") | map(split(",")[]) | map(select(startswith("tofu/")))')
+          echo "ENVIRONMENTS=$ENVIRONMENT_DIRECTORIES_JSON"
+          echo "ENVIRONMENTS=$ENVIRONMENT_DIRECTORIES_JSON" >> $GITHUB_OUTPUT
+          exit 0
+        fi
+
         CHANGED_FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.event.after }})
         echo "Changed files:"
         echo "$CHANGED_FILES"
@@ -54,13 +61,6 @@ jobs:
         echo "setting env var"
         echo "ENVIRONMENTS=$CHANGED_DIRS" >> $GITHUB_OUTPUT
 
-    - name: Get input environment directories
-      if: ${{ inputs.environments }} != ''
-      id: get-input-environments
-      run: |
-        echo "Getting input environments"
-        ENVIRONMENT_DIRECTORIES_JSON=$(echo ${{ inputs.environments }} | jq -Rsc 'split("\n") | map(split(",")[]) | map(select(startswith("tofu/")))')
-        echo "ENVIRONMENTS=$ENVIRONMENT_DIRECTORIES_JSON" >> $GITHUB_OUTPUT
 
   tofu-run:
     needs: get-environment-directories
