@@ -74,6 +74,8 @@ jobs:
       GITHUB_APP_ID: ${{ secrets.EVOTEUMBOT_APP_ID }}
       GITHUB_APP_INSTALLATION_ID: ${{ secrets.EVOTEUMBOT_APP_INSTALLATION_ID }}
       GITHUB_APP_PEM_FILE: ${{ secrets.EVOTEUMBOT_APP_PEM_FILE }}
+      QUAY_OAUTH2_USERNAME: ${{ secrets.QUAY_OAUTH2_USERNAME }}
+      QUAY_TOKEN: ${{ secrets.QUAY_TOKEN }}
       TF_VAR_aws_region: ${{ vars.AWS_REGION }}
       TF_VAR_org_name: ${{ github.repository_owner }}
       TF_VAR_repo_name: ${{ github.event.repository.name }}
