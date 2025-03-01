@@ -79,6 +79,7 @@ jobs:
       TF_VAR_aws_region: ${{ vars.AWS_REGION }}
       TF_VAR_organisation: ${{ github.repository_owner }}
       TF_VAR_quay_url: ${{ vars.QUAY_URL }}
+      TF_VAR_quay_domain: ${{ vars.QUAY_DOMAIN }}
       TF_VAR_repo_name: ${{ github.event.repository.name }}
       TF_VAR_repo_url: ${{ github.event.repository.html_url }}
 
