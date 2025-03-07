@@ -37,7 +37,6 @@ Reusable GitHub Actions workflows
 
 This is our collection of [reusable GitHub Actions workflows](https://resources.github.com/learn/pathways/automation/intermediate/create-reusable-workflows-in-github-actions/). They are designed to be used across multiple repositories to ensure consistency and reduce duplication.
 
-The configuration of this repo is managed by OpenTofu in [estate-repos](https://github.com/evoteum/estate-repos).
 
 ## Table of Contents
 
@@ -47,6 +46,7 @@ The configuration of this repo is managed by OpenTofu in [estate-repos](https://
 1. [Security](#security)
 1. [Install](#install)
 1. [Usage](#usage)
+2. [Why does this matter?](#why-does-this-matter-)
 1. [Contributing](#contributing)
 1. [License](#license)
 
@@ -67,23 +67,85 @@ It ensures that all repositories are built and tested in the same way, reducing 
 [//]: # (OPTIONAL IF documentation repo)
 [//]: # (ELSE REQUIRED)
 
-Callable workflow are located in the `.github/workflows` directory. To use them in your repository, copy corresponding workflow in the `callers` directory to your repository's `.github/workflows` directory.
+### How to Add a New Workflow to the Estate
+estate-reusable-workflows provides reusable GitHub Actions workflows that are automatically assigned to repositories based on their configuration. Instead of manually adding workflows to each repository, OpenTofu dynamically generates the correct calling workflows based on predefined conditions.
 
-Callers are the minimal workflows that call the reusable workflows. They are designed to be copied into your repository and should not be modified, other than input parameters.
+To install a new workflow into the estate:
+1.	Create the workflow in `estate-reusable-workflows/.github/workflows/[workflow-name].yml`.
+2.	Define the condition when the workflow should apply in `estate-reusable-workflows/workflows.yml`.
 
-Our [estate-repos](https://github.com/evoteum/estate-repos) can be used to create new repositories with these workflows already included.
+Once added, OpenTofu will ensure the workflow is applied wherever it is needed; no manual YAML copypasta required.
+
+
+> [!IMPORTANT]
+> **Workflow Naming Convention**
+>
+> - **All workflow filenames must be in lowercase kebab-case and end in `.yml`.**
+> - **Names in `workflows.yml` and the `name:` field inside each workflow must be identical to the corresponding workflow filename, but without the `.yml` file extension.**
+>
+> ✅ **Correct:** `container-build-and-push.yml`, `deploy-infrastructure.yml`
+> ❌ **Incorrect:** `Container_Build.yml`, `DeployInfrastructure.yml`, `deployInfrastructure.yml`
+>
+> This ensures consistency across repositories and avoids issues with case-sensitive systems.
+> **Workflows that do not follow this convention may be rejected.**
+
+### How to Add a Workflow to Your Repository
+
+To enable a workflow for your repository, follow these steps:
+
+1. **Find the workflow**
+   - Open [`workflows.yml`](workflows.yml) and locate the workflow you need.
+2. **Identify the enabling variable**
+   - Check which variable controls whether the workflow applies (e.g., `needs_tofu`, `artifact_type: container`).
+3. **Add the variable to your repository configuration**
+   - Open `estate-repos/repos.yml` and add the required variable under your repository’s entry.
+4. **Let OpenTofu do the rest**
+   - OpenTofu will automatically generate and apply the correct workflow.
+
+
 
 ## Usage
 [//]: # (REQUIRED)
 [//]: # (Explain what the thing does. Use screenshots and/or videos.)
 
-Simply copy the caller workflow from the `callers` directory to your repository's `.github/workflows` directory. You can then modify the input parameters to suit your needs.
+
+Workflows are assigned automatically based on repository configuration, removing the need for manual workflow definitions.
+
+Here is how it works:
+1.	`estate-reusable-workflows` defines reusable workflows in `.github/workflows/`.
+2.	Each workflow’s conditions are stored in `workflows.yml` to determine when it should apply.
+3.	The repo configuration is defined in `repos.yml` in `estate-repos`.
+4. `estate-repos` calls the `github/workflows` module in `tofu-modules`
+5. The `github/workflows` module automatically
+   1. fetches the `estate-reusable-workflows/workflows.yml` list
+   2. generates the required caller workflows
+   3. pushes generated caller workflows to each repository.
+
+By defining workflows in a single place and letting OpenTofu handle their assignment, repositories always get the right workflows without YAML duplication or manual setup. 🚀
+
+
+
 
 [//]: # (Extra sections)
 [//]: # (OPTIONAL)
 [//]: # (This should not be called "Extra Sections".)
 [//]: # (This is a space for ≥0 sections to be included,)
 [//]: # (each of which must have their own titles.)
+
+## Why does this matter?
+Automating workflow management helps to ensure that each repository’s configuration is fully defined in repos.yml, eliminating the need for manual intervention.
+Workflows are dynamically assigned based on repository requirements, leading to:
+- Better knowledge transfer – everything is centrally defined and easy to understand.
+- Stronger DRY principles – no redundant YAML, just reusable logic.
+- Consistent repository management – every repo gets exactly what it needs, nothing more, nothing less.
+- No configuration drift – changes are always tracked, preventing inconsistencies. 🚀
+
+Example:
+
+A common frustration with polyrepo structures is the need to manually configure CI/CD for each new repository.
+With this system, a single commit to repos.yml handles everything; defining repo configuration, enabling required workflows, and applying them automatically. 🚀
+
+This approach makes workflow automation scalable, predictable, and effortless. ✅
 
 
 
@@ -118,3 +180,7 @@ PRs are welcome.
 [//]: # (REQUIRED)
 
 All our code is licenced under the AGPL-3.0. See [LICENSE](LICENSE) for more information.
+
+---
+
+The configuration of this repo is managed by OpenTofu in [estate-repos](https://github.com/evoteum/estate-repos).

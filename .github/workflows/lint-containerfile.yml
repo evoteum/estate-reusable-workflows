@@ -1,0 +1,34 @@
+name: lint-containerfile
+
+on:
+  workflow_call:
+
+jobs:
+  hadolint:
+    name: Lint Containerfile
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Find changed Containerfiles
+        id: find_containerfiles
+        run: |
+          CHANGED_FILES=$(git diff --name-only HEAD~1 | grep -E '^.*Containerfile$' || true)
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "No Containerfile changes detected."
+            exit 0
+          fi
+          echo "Found changed Containerfiles:"
+          echo "$CHANGED_FILES"
+          echo "files=$CHANGED_FILES" >> "$GITHUB_ENV"
+
+      - name: Run Hadolint on changed Containerfiles
+        if: env.files != ''
+        run: |
+          for file in $files; do
+            echo "Linting $file"
+            podman run --rm -i hadolint/hadolint < "$file"
+          done

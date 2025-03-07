@@ -8,8 +8,8 @@ on:
         required: true
         type: string
         default: "go"
-      project_path:
-        description: "Relative path to project in monorepo"
+      source_path:
+        description: "Relative path to source code"
         required: true
         type: string
         default: "."
@@ -52,7 +52,7 @@ jobs:
       - name: Checkout Containerfiles Repository
         uses: actions/checkout@v4
         with:
-          repository: org/containerfiles
+          repository: ${{ github.repository_owner }}/containerfiles
           ref: main
           sparse-checkout: |
             ${{ inputs.language }}
@@ -75,8 +75,8 @@ jobs:
             --build-arg TARGET_OS=${{ inputs.target_os }} \
             --build-arg TARGET_ARCH=${{ inputs.target_arch }} \
             --build-arg ENV_FILE=env.list \
-            -t quay.io/myorg/${{ github.event.repository.name }}:latest \
-            project/${{ inputs.project_path }}
+            -t ${{ vars.QUAY_REPOSITORY_PATH }}:latest \
+            project/${{ inputs.source_path }}
 
       - name: Push Image to Quay
         run: |

@@ -1,0 +1,46 @@
+name: todo-to-issue
+
+on:
+  workflow_call:
+    inputs:
+      branch:
+        description: "Branch to scan for TODOs"
+        required: false
+        default: "main"
+        type: string
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Skip if disabled
+        if: ${{ vars.TODO_ISSUE_DISABLED == 'true' }}
+        run: |
+          echo "Skipping job because TODO_ISSUE_DISABLED is set to true"
+          exit 0
+
+      - name: Generate GitHub App Token
+        id: generate_token
+        uses: actions/create-github-app-token@v1
+        with:
+          app_id: ${{ secrets.EVOTEUMBOT_APP_ID }}
+          private_key: ${{ secrets.EVOTEUMBOT_APP_PEM_FILE }}
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch }}
+
+      - name: Run todo-to-issue Action
+        uses: alstr/todo-to-issue-action@v4
+        with:
+          TOKEN: ${{ steps.generate_token.outputs.token }}
+          LABEL: "todo"
+          COMMENT_MARKER: "TODO"
+          CLOSE_ISSUES: true
+          AUTO_PUBLISH_ISSUES: true
