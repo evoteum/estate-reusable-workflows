@@ -4,4 +4,4 @@ tofu-apply-all-environments:
 container-build-and-push:
   artefact_type: container
 todo-to-issue:
-  todo_to_issue_disabled: false
+  needs_todo_to_issue: true
