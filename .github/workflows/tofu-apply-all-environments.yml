@@ -27,7 +27,7 @@ jobs:
   get-environment-directories:
     runs-on: ubuntu-latest
     outputs:
-      environments: ${{ steps.convert-to-json.outputs.ENVIRONMENTS }}
+      environments: ${{ steps.set-output.outputs.ENVIRONMENTS }}
     steps:
       - name: Checkout repository
         if: ${{ !contains(inputs.environments, 'tofu/') }}
