@@ -114,7 +114,7 @@ jobs:
             --data '{
               "name": "Short-Lived Job Token",
               "policy": [{
-                "permission_groups": ["Zone.DNS", "Zone.Read"],
+                "permission_groups": ["Zone.DNS", "Zone.Read", "Zone.Settings"],
                 "resources": { "com.cloudflare.api.zone.'"$HOMEPAGE_DOMAIN"'" : "*" }
               }],
               "not_before": "'$(date -u --iso-8601=seconds)'",
