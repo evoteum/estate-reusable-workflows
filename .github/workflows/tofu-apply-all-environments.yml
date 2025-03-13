@@ -107,9 +107,9 @@ jobs:
 
     steps:
       - name: Generate short-lived Cloudflare job token (Scoped)
-        if: github.event.repository.homepage_url != ''
+        if: github.repository.homepage_url != ''
         run: |
-          HOMEPAGE_DOMAIN=$(echo "${{ github.event.repository.homepage_url }}" | sed -E 's#^https?://##')
+          HOMEPAGE_DOMAIN=$(echo "${{ github.repository.homepage_url }}" | sed -E 's#^https?://##')
 
           export CLOUDFLARE_JOB_TOKEN=$(curl -X POST "https://api.cloudflare.com/client/v4/accounts/${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/api-tokens" \
             -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_TOKEN_MANAGER }}" \
