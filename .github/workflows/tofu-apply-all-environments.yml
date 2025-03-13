@@ -90,7 +90,6 @@ jobs:
       matrix:
           environment: ${{ fromJSON(needs.get-environment-directories.outputs.ENVIRONMENTS) }}
     env:
-      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       GITHUB_APP_ID: ${{ secrets.EVOTEUMBOT_APP_ID }}
       GITHUB_APP_INSTALLATION_ID: ${{ secrets.EVOTEUMBOT_APP_INSTALLATION_ID }}
       GITHUB_APP_PEM_FILE: ${{ secrets.EVOTEUMBOT_APP_PEM_FILE }}
@@ -155,6 +154,8 @@ jobs:
           sparse-checkout: ${{ matrix.environment }}
 
       - name: initialise tofu
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ env.CLOUDFLARE_API_TOKEN }}
         run: |
             echo "===== Processing Environment: ${{ github.event.repository.name }}/$ENVIRONMENT ====="
             cd ${{ matrix.environment }}
@@ -167,6 +168,8 @@ jobs:
 
       - name: Build OpenTofu Plan
         id: tofu-plan
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ env.CLOUDFLARE_API_TOKEN }}
         run: |
           set -Eeuo pipefail
           echo "Building tofu plan for environment: ${{ github.event.repository.name }}/$ENVIRONMENT"
@@ -189,6 +192,8 @@ jobs:
 
       - name: Apply OpenTofu plan
         if: steps.tofu-check-plan.outputs.changes == 'true'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ env.CLOUDFLARE_API_TOKEN }}
         run: |
           echo "Running tofu apply for environment: $ENVIRONMENT"
           cd ${{ matrix.environment }}
