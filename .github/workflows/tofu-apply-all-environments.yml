@@ -1,4 +1,4 @@
-name: all-environments-tofu-apply
+name: tofu-apply-all-environments
 # Deploy all changes to all environments.
 # This approach ensures that,
 # - additional environments can be added without changing the workflow.
@@ -41,8 +41,9 @@ jobs:
         if: inputs.environments != ''
         id: input-dirs
         run: |
-          ENVIRONMENTS_JSON=$(echo ${{ inputs.environments }} | \
-            jq -Rsc 'split("\n") | map(split(",")[]) | map(select(length > 0)) | map(if startswith("tofu/") then . else "tofu/"+. end)')
+          ENVIRONMENTS_JSON=$(echo '${{ inputs.environments }}' | \
+            tr ',' '\n' | \
+            jq -Rsc '[inputs | select(length > 0) | if startswith("tofu/") then . else "tofu/"+. end]')
 
           if [ "$ENVIRONMENTS_JSON" == "[]" ]; then
             echo "No valid directories provided in input"
