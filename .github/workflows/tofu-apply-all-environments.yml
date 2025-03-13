@@ -27,7 +27,7 @@ jobs:
   get-environment-directories:
     runs-on: ubuntu-latest
     outputs:
-      environments: ${{ steps.set-output.outputs.ENVIRONMENTS }}
+      environments: ${{ steps.input-dirs.outputs.ENVIRONMENTS || steps.push-changes.outputs.ENVIRONMENTS || steps.all-dirs.outputs.ENVIRONMENTS }}
     steps:
       - name: Checkout repository
         if: ${{ !contains(inputs.environments, 'tofu/') }}
@@ -81,11 +81,6 @@ jobs:
           echo "All tofu directories:"
           echo "$ALL_DIRS"
           echo "ENVIRONMENTS=$ALL_DIRS" >> $GITHUB_OUTPUT
-
-      - name: Set final environments output
-        id: set-output
-        run: |
-          echo "ENVIRONMENTS=${{ steps.input-dirs.outputs.ENVIRONMENTS }}${{ steps.push-changes.outputs.ENVIRONMENTS }}${{ steps.all-dirs.outputs.ENVIRONMENTS }}" >> $GITHUB_OUTPUT
 
   tofu-run:
     needs: get-environment-directories
