@@ -72,7 +72,16 @@ estate-reusable-workflows provides reusable GitHub Actions workflows that are au
 
 To install a new workflow into the estate:
 1.	Create the workflow in `estate-reusable-workflows/.github/workflows/[workflow-name].yml`.
-2.	Define the condition when the workflow should apply in `estate-reusable-workflows/workflows.yml`.
+2.	Define all the conditions that are required for the workflow to be activated `estate-reusable-workflows/workflows.yml`.
+
+Example:
+
+```yaml
+my-amazing-workflow:
+  sky: blue
+  grass: green
+  coffee: hot
+```
 
 Once added, OpenTofu will ensure the workflow is applied wherever it is needed; no manual YAML copypasta required.
 
@@ -96,8 +105,8 @@ To enable a workflow for your repository, follow these steps:
 1. **Find the workflow**
    - Open [`workflows.yml`](workflows.yml) and locate the workflow you need.
 2. **Identify the enabling variable**
-   - Check which variable controls whether the workflow applies (e.g., `needs_tofu`, `artifact_type: container`).
-3. **Add the variable to your repository configuration**
+   - Check which variables control whether the workflow applies, as defined in [`workflows.yml`](workflows.yml)
+3. **Add the variables to your repository configuration**
    - Open `estate-repos/repos.yml` and add the required variable under your repository’s entry.
 4. **Let OpenTofu do the rest**
    - OpenTofu will automatically generate and apply the correct workflow.

@@ -12,8 +12,8 @@ on:
         required: false
         default: true
         type: boolean
-      environment_directories:
-        description: 'Comma separated list of environment directories to apply changes to. If empty, all changed environments will be applied.'
+      environments:
+        description: 'Comma separated list of environment directories to apply changes to. If empty, all environments will be applied.'
         required: false
         type: string
 
@@ -29,38 +29,83 @@ jobs:
     outputs:
       environments: ${{ steps.convert-to-json.outputs.ENVIRONMENTS }}
     steps:
+      - name: Checkout repository
+        if: ${{ !contains(inputs.environments, 'tofu/') }}
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: ${{ github.event_name == 'push' && 2 || 1 }}
+          sparse-checkout: |
+            tofu/
 
-    - name: Checkout repository if environment_directories is not provided
-      if: ${{ !contains(inputs.environment_directories, 'tofu/') }}
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 2
-        sparse-checkout: |
-          tofu/
+      - name: Get environments from input directories
+        if: inputs.environments != ''
+        id: input-dirs
+        run: |
+          ENVIRONMENTS_JSON=$(echo ${{ inputs.environments }} | \
+            jq -Rsc 'split("\n") | map(split(",")[]) | map(select(length > 0)) | map(if startswith("tofu/") then . else "tofu/"+. end)')
 
-    - name: Convert environment directories to JSON for matrix consumption
-      id: convert-to-json
-      run: |
-        if [ ! -z "${{ inputs.environment_directories }}" ]; then
-          echo "Getting environment directories from input"
-          echo "got input: ${{ inputs.environment_directories }}"
-          ENVIRONMENT_DIRECTORIES_JSON=$(echo ${{ inputs.environment_directories }} | jq -Rsc 'split("\n") | map(split(",")[]) | map(select(startswith("tofu/")))')
-          echo "ENVIRONMENTS=$ENVIRONMENT_DIRECTORIES_JSON"
-          echo "ENVIRONMENTS=$ENVIRONMENT_DIRECTORIES_JSON" >> $GITHUB_OUTPUT
-          exit 0
-        fi
-        echo "Getting environment directories from changed directories"
-        CHANGED_FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.event.after }})
-        echo "Changed files:"
-        echo "$CHANGED_FILES"
-        CHANGED_DIRS=$(for file in $CHANGED_FILES; do
-          dirname "$file"
-        done | sort | uniq | jq -Rsc 'split("\n") | map(select(startswith("tofu/")))')
-        echo "Changed directories:"
-        echo "$CHANGED_DIRS"
-        echo "setting env var"
-        echo "ENVIRONMENTS=$CHANGED_DIRS" >> $GITHUB_OUTPUT
+          if [ "$ENVIRONMENTS_JSON" == "[]" ]; then
+            echo "No valid directories provided in input"
+            exit 1
+          fi
+          echo "Input directories after processing:"
+          echo "$ENVIRONMENTS_JSON" | jq '.'
+          echo "ENVIRONMENTS=$ENVIRONMENTS_JSON" >> $GITHUB_OUTPUT
 
+      - name: Get environments from push event changes
+        if: ${{ github.event_name == 'push' && inputs.environments == '' }}
+        id: push-changes
+        run: |
+          CHANGED_FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.event.after }})
+          echo "Changed files:"
+          echo "$CHANGED_FILES"
+          CHANGED_DIRS=$(for file in $CHANGED_FILES; do
+            dirname "$file"
+          done | sort | uniq | jq -Rsc 'split("\n") | map(select(startswith("tofu/")))')
+          if [ "$CHANGED_DIRS" == "[]" ]; then
+            echo "No changes detected in tofu directories"
+            exit 1
+          fi
+          echo "Changed directories:"
+          echo "$CHANGED_DIRS"
+          echo "ENVIRONMENTS=$CHANGED_DIRS" >> $GITHUB_OUTPUT
+
+      - name: Get environments from all tofu directories
+        if: ${{ inputs.environments == '' && github.event_name != 'push' }}
+        id: all-dirs
+        run: |
+          ALL_DIRS=$(find tofu -maxdepth 1 -mindepth 1 -type d | jq -Rsc 'split("\n") | map(select(length > 0))')
+          if [ "$ALL_DIRS" == "[]" ]; then
+            echo "No tofu directories found"
+            exit 1
+          fi
+          echo "All tofu directories:"
+          echo "$ALL_DIRS"
+          echo "ENVIRONMENTS=$ALL_DIRS" >> $GITHUB_OUTPUT
+
+      - name: Set final environments output
+        id: convert-to-json
+        run: |
+          ENVIRONMENTS_JSON=""
+          if [ ! -z "${{ steps.input-dirs.outputs.ENVIRONMENTS }}" ]; then
+            ENVIRONMENTS_JSON="${{ steps.input-dirs.outputs.ENVIRONMENTS }}"
+          elif [ ! -z "${{ steps.push-changes.outputs.ENVIRONMENTS }}" ]; then
+            ENVIRONMENTS_JSON="${{ steps.push-changes.outputs.ENVIRONMENTS }}"
+          elif [ ! -z "${{ steps.all-dirs.outputs.ENVIRONMENTS }}" ]; then
+            ENVIRONMENTS_JSON="${{ steps.all-dirs.outputs.ENVIRONMENTS }}"
+          fi
+
+          if ! echo "$ENVIRONMENTS_JSON" | jq 'type == "array"' > /dev/null 2>&1; then
+            echo "Error: Invalid JSON array format"
+            exit 1
+          fi
+
+          if [ -z "$ENVIRONMENTS_JSON" ] || [ "$ENVIRONMENTS_JSON" == "[]" ]; then
+            echo "No environments found through any method"
+            exit 1
+          fi
+
+          echo "ENVIRONMENTS=$ENVIRONMENTS_JSON" >> $GITHUB_OUTPUT
 
   tofu-run:
     needs: get-environment-directories
