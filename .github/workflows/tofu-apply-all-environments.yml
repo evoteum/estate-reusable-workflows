@@ -41,9 +41,7 @@ jobs:
         if: inputs.environments != ''
         id: input-dirs
         run: |
-          ENVIRONMENTS_JSON=$(echo '${{ inputs.environments }}' | \
-            tr ',' '\n' | \
-            jq -Rsc '[inputs | select(length > 0) | if startswith("tofu/") then . else "tofu/"+. end]')
+          ENVIRONMENTS_JSON=$(echo ${{ inputs.environments }} | jq -Rsc 'split("\n") | map(split(",")[]) | map(select(startswith("tofu/") or length > 0)) | map(if startswith("tofu/") then . else "tofu/"+. end)')
 
           if [ "$ENVIRONMENTS_JSON" == "[]" ]; then
             echo "No valid directories provided in input"
@@ -85,28 +83,9 @@ jobs:
           echo "ENVIRONMENTS=$ALL_DIRS" >> $GITHUB_OUTPUT
 
       - name: Set final environments output
-        id: convert-to-json
+        id: set-output
         run: |
-          ENVIRONMENTS_JSON=""
-          if [ ! -z "${{ steps.input-dirs.outputs.ENVIRONMENTS }}" ]; then
-            ENVIRONMENTS_JSON="${{ steps.input-dirs.outputs.ENVIRONMENTS }}"
-          elif [ ! -z "${{ steps.push-changes.outputs.ENVIRONMENTS }}" ]; then
-            ENVIRONMENTS_JSON="${{ steps.push-changes.outputs.ENVIRONMENTS }}"
-          elif [ ! -z "${{ steps.all-dirs.outputs.ENVIRONMENTS }}" ]; then
-            ENVIRONMENTS_JSON="${{ steps.all-dirs.outputs.ENVIRONMENTS }}"
-          fi
-
-          if ! echo "$ENVIRONMENTS_JSON" | jq 'type == "array"' > /dev/null 2>&1; then
-            echo "Error: Invalid JSON array format"
-            exit 1
-          fi
-
-          if [ -z "$ENVIRONMENTS_JSON" ] || [ "$ENVIRONMENTS_JSON" == "[]" ]; then
-            echo "No environments found through any method"
-            exit 1
-          fi
-
-          echo "ENVIRONMENTS=$ENVIRONMENTS_JSON" >> $GITHUB_OUTPUT
+          echo "ENVIRONMENTS=${{ steps.input-dirs.outputs.ENVIRONMENTS }}${{ steps.push-changes.outputs.ENVIRONMENTS }}${{ steps.all-dirs.outputs.ENVIRONMENTS }}" >> $GITHUB_OUTPUT
 
   tofu-run:
     needs: get-environment-directories
