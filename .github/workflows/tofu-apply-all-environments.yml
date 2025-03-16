@@ -205,7 +205,7 @@ jobs:
 
           echo "Using domain scope: $HOMEPAGE_DOMAIN"
 
-          API_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "https://api.cloudflare.com/client/v4/accounts/${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/api-tokens" \
+          API_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "https://api.cloudflare.com/client/v4/accounts/${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/tokens" \
             -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_TOKEN_MANAGER }}" \
             -H "Content-Type: application/json" \
             --data '{
