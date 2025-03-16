@@ -106,24 +106,6 @@ jobs:
       TF_VAR_repository_name: ${{ github.event.repository.name }}
 
     steps:
-      - name: Generate short-lived Cloudflare job token (Scoped)
-        run: |
-          export CLOUDFLARE_JOB_TOKEN=$(curl -X POST "https://api.cloudflare.com/client/v4/accounts/${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/api-tokens" \
-            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_TOKEN_MANAGER }}" \
-            -H "Content-Type: application/json" \
-            --data '{
-              "name": "Short-Lived Job Token",
-              "policy": [{
-                "permission_groups": ["Zone.DNS", "Zone.Read", "Zone.Settings"],
-                "resources": { "com.cloudflare.api.zone.'"$HOMEPAGE_DOMAIN"'" : "*" }
-              }],
-              "not_before": "'$(date -u --iso-8601=seconds)'",
-              "expires_on": "'$(date -u -d "+10 minutes" --iso-8601=seconds)'"
-            }' | jq -r '.result.value')
-
-          echo "::add-mask::$CLOUDFLARE_JOB_TOKEN" # Hide in logs
-          echo "CLOUDFLARE_API_TOKEN=$CLOUDFLARE_JOB_TOKEN" >> $GITHUB_ENV
-
       - name: set additional env vars
         run: |
           export ENVIRONMENT=$(basename "${{ matrix.environment }}")
@@ -186,6 +168,75 @@ jobs:
           fi
           echo "Changes detected, lets a go!"
           echo "changes=true" >> $GITHUB_OUTPUT
+
+      - name: Check plan for Cloudflare changes
+        id: check-cloudflare
+        if: steps.tofu-check-plan.outputs.changes == 'true'
+        run: |
+          cd ${{ matrix.environment }}
+          if grep -q "cloudflare_" plan.txt; then
+            echo "has_cloudflare=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_cloudflare=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Generate short-lived Cloudflare job token if plan includes Cloudflare changes
+        if: steps.check-cloudflare.outputs.has_cloudflare == 'true'
+        run: |
+          if [[ "${{ github.event.repository.name }}" == "estate-repos" ]]; then
+            HOMEPAGE_DOMAIN="*"
+            PERMISSION_GROUPS='["Zone.Zone"]'
+          else
+            HOMEPAGE_DOMAIN=$(echo "${{ github.repository.homepage_url }}" | sed -E 's#^https?://##')
+            PERMISSION_GROUPS='[
+              "Zone.Settings",       # Modify zone settings
+              "Zone.DNS",            # Manage DNS records
+              "Zone.SSL and Certificates", # Manage SSL/TLS settings
+              "Zone.Page Rules",     # Manage page rules
+              "Zone.Cache Purge",    # Purge cache
+              "Zone.Workers"         # Manage workers
+            ]'
+          fi
+
+          if [ -z "$HOMEPAGE_DOMAIN" ]; then
+            echo "No repository homepage URL set"
+            exit 1
+          fi
+
+          echo "Using domain scope: $HOMEPAGE_DOMAIN"
+
+          API_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "https://api.cloudflare.com/client/v4/accounts/${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/api-tokens" \
+            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_TOKEN_MANAGER }}" \
+            -H "Content-Type: application/json" \
+            --data '{
+              "name": "Short-Lived Job Token",
+              "policy": [{
+                "permission_groups": '"$PERMISSION_GROUPS"',
+                "resources": { "com.cloudflare.api.zone.'"$HOMEPAGE_DOMAIN"'" : "*" }
+              }],
+              "not_before": "'$(date -u --iso-8601=seconds)'",
+              "expires_on": "'$(date -u -d "+10 minutes" --iso-8601=seconds)'"
+            }')
+
+          HTTP_BODY=$(echo "$API_RESPONSE" | head -n 1)
+          HTTP_STATUS=$(echo "$API_RESPONSE" | tail -n 1)
+
+          if [ "$HTTP_STATUS" != "200" ]; then
+            echo "Failed to generate Cloudflare token. Status code: $HTTP_STATUS"
+            echo "Response: $HTTP_BODY"
+            exit 1
+          fi
+
+          CLOUDFLARE_JOB_TOKEN=$(echo "$HTTP_BODY" | jq -r '.result.value')
+          if [ -z "$CLOUDFLARE_JOB_TOKEN" ] || [ "$CLOUDFLARE_JOB_TOKEN" = "null" ]; then
+            echo "Failed to extract token from response"
+            echo "Response: $HTTP_BODY"
+            exit 1
+          fi
+
+          echo "::add-mask::$CLOUDFLARE_JOB_TOKEN"
+          echo "Successfully generated Cloudflare token"
+          echo "CLOUDFLARE_API_TOKEN=$CLOUDFLARE_JOB_TOKEN" >> $GITHUB_ENV
 
       - name: Apply OpenTofu plan
         if: steps.tofu-check-plan.outputs.changes == 'true'
