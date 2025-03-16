@@ -57,6 +57,38 @@ This is our collection of [reusable GitHub Actions workflows](https://resources.
 Ensuring that our workflows are consistent across the estate is important for maintaining security and reliability.
 It ensures that all repositories are built and tested in the same way, reducing the risk of vulnerabilities.
 
+### Cloudflare Token Management
+
+#### Current Approach
+We currently use a long-lived Cloudflare API token with zone-level write permissions. This token is stored as a GitHub Actions secret (`CLOUDFLARE_API_TOKEN`).
+
+#### Best Practice
+The ideal security approach would be:
+1. Generate short-lived (10 minute) tokens for each workflow run
+2. Scope tokens precisely to only the required permissions based on the planned changes
+3. Use permission group UUIDs for exact permission specification
+4. Restrict tokens to specific zones based on the repository's homepage URL
+
+#### Why We're Not Doing This Yet
+We've opted for simplicity over perfect security for several reasons:
+1. The current Cloudflare API makes this complex:
+   - Requires multiple API calls to look up permission group UUIDs
+   - No documented mapping between Terraform resources and required permissions
+   - Complex token policy syntax with non-obvious resource scoping
+2. The blast radius is limited:
+   - Tokens only have zone-level access (no account management)
+   - GitHub Actions secrets provide good security
+   - Our changes are version controlled and can be reverted
+3. The complexity cost outweighs the security benefit for our current scale
+
+#### Future Improvements
+We plan to implement proper token lifecycle management when:
+1. The Cloudflare provider documents which permissions are needed for each resource
+2. The API simplifies permission group handling
+3. Our scale justifies the additional complexity
+
+For now, we're accepting this calculated risk while maintaining good security through other means (GitHub security, limited scope, audit logs).
+
 [//]: # (## Background)
 [//]: # (OPTIONAL)
 [//]: # (Explain the motivation and abstract dependencies for this repo)
