@@ -60,14 +60,16 @@ It ensures that all repositories are built and tested in the same way, reducing 
 ### Cloudflare Token Management
 
 #### Current Approach
-We currently use a long-lived Cloudflare API token with zone-level write permissions. This token is stored as a GitHub Actions secret (`CLOUDFLARE_API_TOKEN`).
+We currently use a long-lived Cloudflare API token with account-level zone management permissions. This token is stored as a GitHub Actions secret (`CLOUDFLARE_API_TOKEN`). The token needs `Account Zone Write` permissions to create and manage zones at the account level.
 
 #### Best Practice
 The ideal security approach would be:
 1. Generate short-lived (10 minute) tokens for each workflow run
-2. Scope tokens precisely to only the required permissions based on the planned changes
+2. Scope tokens precisely to only the required permissions based on the planned changes:
+   - Account Zone Write for zone creation/deletion
+   - Zone-level permissions for DNS and settings changes
 3. Use permission group UUIDs for exact permission specification
-4. Restrict tokens to specific zones based on the repository's homepage URL
+4. Restrict tokens to specific zones for zone-level operations
 
 #### Why We're Not Doing This Yet
 We've opted for simplicity over perfect security for several reasons:
@@ -75,8 +77,9 @@ We've opted for simplicity over perfect security for several reasons:
    - Requires multiple API calls to look up permission group UUIDs
    - No documented mapping between Terraform resources and required permissions
    - Complex token policy syntax with non-obvious resource scoping
+   - Mixed account/zone-level permissions make scoping difficult
 2. The blast radius is limited:
-   - Tokens only have zone-level access (no account management)
+   - Token permissions are limited to zone management
    - GitHub Actions secrets provide good security
    - Our changes are version controlled and can be reverted
 3. The complexity cost outweighs the security benefit for our current scale
@@ -139,7 +142,7 @@ To enable a workflow for your repository, follow these steps:
 2. **Identify the enabling variable**
    - Check which variables control whether the workflow applies, as defined in [`workflows.yml`](workflows.yml)
 3. **Add the variables to your repository configuration**
-   - Open `estate-repos/repos.yml` and add the required variable under your repository’s entry.
+   - Open `estate-repos/repos.yml` and add the required variable under your repository's entry.
 4. **Let OpenTofu do the rest**
    - OpenTofu will automatically generate and apply the correct workflow.
 
@@ -154,7 +157,7 @@ Workflows are assigned automatically based on repository configuration, removing
 
 Here is how it works:
 1.	`estate-reusable-workflows` defines reusable workflows in `.github/workflows/`.
-2.	Each workflow’s conditions are stored in `workflows.yml` to determine when it should apply.
+2.	Each workflow's conditions are stored in `workflows.yml` to determine when it should apply.
 3.	The repo configuration is defined in `repos.yml` in `estate-repos`.
 4. `estate-repos` calls the `github/workflows` module in `tofu-modules`
 5. The `github/workflows` module automatically
@@ -174,7 +177,7 @@ By defining workflows in a single place and letting OpenTofu handle their assign
 [//]: # (each of which must have their own titles.)
 
 ## Why does this matter?
-Automating workflow management helps to ensure that each repository’s configuration is fully defined in repos.yml, eliminating the need for manual intervention.
+Automating workflow management helps to ensure that each repository's configuration is fully defined in repos.yml, eliminating the need for manual intervention.
 Workflows are dynamically assigned based on repository requirements, leading to:
 - Better knowledge transfer – everything is centrally defined and easy to understand.
 - Stronger DRY principles – no redundant YAML, just reusable logic.

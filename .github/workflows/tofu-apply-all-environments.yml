@@ -90,14 +90,16 @@ jobs:
       matrix:
           environment: ${{ fromJSON(needs.get-environment-directories.outputs.ENVIRONMENTS) }}
     env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       GITHUB_APP_ID: ${{ secrets.EVOTEUMBOT_APP_ID }}
       GITHUB_APP_INSTALLATION_ID: ${{ secrets.EVOTEUMBOT_APP_INSTALLATION_ID }}
       GITHUB_APP_PEM_FILE: ${{ secrets.EVOTEUMBOT_APP_PEM_FILE }}
       QUAY_OAUTH2_USERNAME: ${{ secrets.QUAY_OAUTH2_USERNAME }}
       QUAY_TOKEN: ${{ secrets.QUAY_TOKEN }}
+      QUAY_URL: ${{ vars.QUAY_URL }}
       TF_VAR_aws_region: ${{ vars.AWS_REGION }}
       TF_VAR_cloudflare_account_id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      TF_VAR_homepage_url: ${{ github.event.repository.homepage }}
       TF_VAR_organisation: ${{ github.repository_owner }}
       TF_VAR_quay_domain: ${{ vars.QUAY_DOMAIN }}
       TF_VAR_quay_repository_path: ${{ vars.QUAY_REPOSITORY_PATH }}
