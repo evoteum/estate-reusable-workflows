@@ -3,5 +3,10 @@ tofu-apply-all-environments:
   needs_tofu: true
 container-build-and-push:
   artefact_type: container
+  language:
+    - go
+    - python
+  source_path: EXISTS
+  language_version: EXISTS
 todo-to-issue:
   needs_todo_to_issue: true

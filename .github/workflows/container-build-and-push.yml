@@ -2,42 +2,6 @@ name: container-build-and-push
 
 on:
   workflow_call:
-    inputs:
-      language:
-        description: "Programming language (e.g., go, python, rust)"
-        required: true
-        type: string
-        default: "go"
-      source_path:
-        description: "Relative path to source code"
-        required: true
-        type: string
-        default: "."
-      language_version:
-        description: "Version of the programming language"
-        required: false
-        type: string
-        default: "latest"
-      app_name:
-        description: "Name of the built application binary or main executable/script"
-        required: false
-        type: string
-        default: "app"
-      build_flags:
-        description: "Build flags or options for the build process"
-        required: false
-        type: string
-        default: ""
-      target_os:
-        description: "Target OS for cross-compilation (if applicable)"
-        required: false
-        type: string
-        default: "linux"
-      target_arch:
-        description: "Target architecture for cross-compilation (if applicable)"
-        required: false
-        type: string
-        default: "amd64"
 
 jobs:
   build:
@@ -55,7 +19,7 @@ jobs:
           repository: ${{ github.repository_owner }}/containerfiles
           ref: main
           sparse-checkout: |
-            ${{ inputs.language }}
+            ${{ vars.LANGUAGE }}
           sparse-checkout-cone-mode: false
           path: containerfiles
 
@@ -68,15 +32,15 @@ jobs:
 
       - name: Build Container Image with Podman
         run: |
-          podman build -f containerfiles/${{ inputs.language }}/Containerfile \
-            --build-arg LANGUAGE_VERSION=${{ inputs.language_version }} \
-            --build-arg APP_NAME=${{ inputs.app_name }} \
-            --build-arg BUILD_FLAGS="${{ inputs.build_flags }}" \
-            --build-arg TARGET_OS=${{ inputs.target_os }} \
-            --build-arg TARGET_ARCH=${{ inputs.target_arch }} \
+          podman build -f containerfiles/${{ vars.LANGUAGE }}/Containerfile \
+            --build-arg LANGUAGE_VERSION=${{ vars.LANGUAGE_VERSION }} \
+            --build-arg APP_NAME=${{ vars.APP_NAME }} \
+            --build-arg BUILD_FLAGS="${{ vars.BUILD_FLAGS }}" \
+            --build-arg TARGET_OS=${{ vars.TARGET_OS }} \
+            --build-arg TARGET_ARCH=${{ vars.TARGET_ARCH }} \
             --build-arg ENV_FILE=env.list \
             -t ${{ vars.QUAY_REPOSITORY_PATH }}:latest \
-            project/${{ inputs.source_path }}
+            project/${{ vars.SOURCE_PATH }}
 
       - name: Push Image to Quay
         run: |
