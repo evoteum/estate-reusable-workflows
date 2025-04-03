@@ -52,7 +52,7 @@ jobs:
         with:
           username: ${{ vars.QUAY_ROBOT_USERNAME }}
           password: ${{ secrets.QUAY_ROBOT_PASSWORD }}
-          registry: ${{ vars.QUAY_DOMAIN }}/${{ github.repository }}
+          registry: ${{ vars.QUAY_DOMAIN }}
 
       - name: Tag and Push Image to Quay
         run: |
