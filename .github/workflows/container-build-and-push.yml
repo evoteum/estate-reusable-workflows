@@ -47,7 +47,19 @@ jobs:
             -t ${{ vars.QUAY_REPOSITORY_PATH }}:latest \
             project/${{ vars.SOURCE_PATH }}
 
-      - name: Push Image to Quay
+      - name: Log in to Quay
+        uses: redhat-actions/podman-login@v1
+        with:
+          username: ${{ vars.QUAY_ROBOT_USERNAME }}
+          password: ${{ secrets.QUAY_ROBOT_PASSWORD }}
+          registry: ${{ vars.QUAY_DOMAIN }}
+
+      - name: Tag and Push Image to Quay
         run: |
-          echo "${{ secrets.QUAY_ROBOT_PASSWORD }}" | podman login -u='${{ vars.QUAY_ROBOT_USERNAME }}' --password-stdin ${{ vars.QUAY_DOMAIN }}
-          podman push ${{ vars.QUAY_REPOSITORY_PATH }}:latest
+          SHORT_SHA=${GITHUB_SHA::7}
+          podman tag ${{ vars.QUAY_REPOSITORY_PATH }}:latest ${{ vars.QUAY_REPOSITORY_PATH }}:$SHORT_SHA
+          podman push --digestfile digest.txt ${{ vars.QUAY_REPOSITORY_PATH }}:latest
+          podman push ${{ vars.QUAY_REPOSITORY_PATH }}:$SHORT_SHA
+
+          echo "Image pushed with digest:"
+          cat digest.txt
