@@ -102,6 +102,7 @@ jobs:
       TF_VAR_cloudflare_zone_id: ${{ secrets.CLOUDFLARE_ZONE_ID }}
       TF_VAR_homepage_url: ${{ github.event.repository.homepage }}
       TF_VAR_organisation: ${{ github.repository_owner }}
+      TF_VAR_permitted_environments: ${{ vars.PERMITTED_ENVIRONMENTS }}
       TF_VAR_quay_domain: ${{ vars.QUAY_DOMAIN }}
       TF_VAR_quay_repository_path: ${{ vars.QUAY_REPOSITORY_PATH }}
       TF_VAR_quay_url: ${{ vars.QUAY_URL }}
