@@ -149,6 +149,13 @@ jobs:
               -backend-config="key=$STATE_FILE_KEY" \
               -backend-config="region=${{ vars.AWS_REGION }}"
 
+      - name: Run tofu tests
+        id: tofu-test
+        run: |
+          cd ${{ matrix.environment }}
+          echo "Testing tofu for environment: ${{ github.event.repository.name }}/$ENVIRONMENT"
+          tofu test
+
       - name: Build OpenTofu Plan
         id: tofu-plan
         run: |
@@ -172,6 +179,7 @@ jobs:
           echo "changes=true" >> $GITHUB_OUTPUT
 
       - name: Apply OpenTofu plan
+        id: tofu-apply
         if: steps.tofu-check-plan.outputs.changes == 'true'
         run: |
           echo "Running tofu apply for environment: $ENVIRONMENT"
