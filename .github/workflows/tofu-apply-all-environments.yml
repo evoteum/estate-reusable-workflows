@@ -157,7 +157,9 @@ jobs:
         run: |
           cd ${{ matrix.environment }}
           echo "Testing tofu for environment: ${{ github.event.repository.name }}/$ENVIRONMENT"
-          tofu test
+          tofu test | tee test-results.txt
+          if grep -q "0 passed, 0 failed." test-results.txt; then
+            echo "Please add some OpenTofu Tests"
 
       - name: Build OpenTofu Plan
         id: tofu-plan
