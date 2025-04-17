@@ -113,6 +113,7 @@ jobs:
       TF_VAR_repo_url: ${{ github.event.repository.html_url }}
       TF_VAR_repository_name: ${{ github.event.repository.name }}
       TF_VAR_repository_url: ${{ github.event.repository.html_url }}
+      TF_VAR_source_path: ${{ vars.SOURCE_PATH }}
 
     steps:
       - name: set additional env vars
