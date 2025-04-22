@@ -1,5 +1,5 @@
 ---
-tofu-apply-all-environments:
+tofu-apply:
   needs_tofu: true
 container-build-and-push:
   artefact_type: container

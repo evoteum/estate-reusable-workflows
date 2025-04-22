@@ -1,4 +1,4 @@
-name: tofu-apply-all-environments
+name: tofu-apply
 # Deploy all changes to all environments.
 # This approach ensures that,
 # - additional environments can be added without changing the workflow.
