@@ -169,7 +169,11 @@ jobs:
           set -Eeuo pipefail
           echo "Building tofu plan for environment: ${{ github.event.repository.name }}/$ENVIRONMENT"
           cd ${{ matrix.environment }}
-          tofu plan -input=false -out=tfplan | tee plan.txt
+          tofu plan -input=false -out=tfplan 2>&1 | tee plan.txt
+          exit_code=${PIPESTATUS[0]}
+          echo "Exit code: $exit_code"
+          echo "exit_code=$exit_code" >> "$GITHUB_OUTPUT"
+
           tofu show -json tfplan > tfplan.json
 
       - name: Check OpenTofu Plan for changes
@@ -201,11 +205,13 @@ jobs:
 
       - name: Analyse tofu errors
         id: tofu-errors
-        if: steps.tofu-apply.outputs.exit_code != '0'
+        if: ${{ steps.tofu-plan.outputs.exit_code != '0' || steps.tofu-apply.outputs.exit_code != '0' }}
         run: |
           echo "AWS permissions that GitHub Actions is currently lacking:"
           cd ${{ matrix.environment }}
-          sed -n 's/.*is not authorized to perform: \([^ ]*\).*/\1/p' apply.txt | \
+          cat plan.txt apply.txt | \
+            sed -n 's/.*is not authorized to perform: \([^ ]*\).*/\1/p' | \
             sort -u | sed 's/^/  - /'
+
           echo "If these are expected, please add them to estate-config/tofu/development/iam_actions.yml"
           exit 1
