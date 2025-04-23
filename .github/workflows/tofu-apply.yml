@@ -205,8 +205,8 @@ jobs:
         run: |
           echo "AWS permissions that GitHub Actions is currently lacking:"
           cd ${{ matrix.environment }}
-          grep "is not authorized to perform" apply.txt | \
-            sed -n 's/.*is not authorized to perform: \([a-zA-Z0-9:\*]*\).*/\1/p' | \
+          grep -o 'is not authorized to perform: [^ ]*' apply.txt | \
+            sed 's/is not authorized to perform: //' | \
             sort -u | sed 's/^/  - /'
           echo "If these are expected, please add them to estate-config/tofu/development/iam_actions.yml"
           exit 1
