@@ -210,6 +210,7 @@ jobs:
         if: steps.tofu-apply.outputs.exit_code != '0'
         run: |
           echo "AWS permissions that GitHub Actions is currently lacking:"
+          cd ${{ matrix.environment }}
           grep "is not authorized to perform" apply.txt | \
             sed -n 's/.*is not authorized to perform: \([a-zA-Z0-9:\*]*\).*/\1/p' | \
             sort -u | sed 's/^/  - /'
