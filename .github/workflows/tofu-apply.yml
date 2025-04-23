@@ -195,6 +195,12 @@ jobs:
           tofu apply tfplan | tee apply.txt
           echo "Finished processing environment: $ENVIRONMENT"
 
+
+      - name: Get apply result
+        run: |
+          echo "Result: ${{ steps.tofu-apply.result }}"
+          echo "Outcome: ${{ steps.tofu-apply.outcome }}"
+
       - name: Analyse tofu errors
         if: steps.tofu-apply.result == 'failure'
         id: tofu-errors
