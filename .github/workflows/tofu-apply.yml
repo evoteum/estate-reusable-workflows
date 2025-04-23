@@ -212,7 +212,9 @@ jobs:
             exit 0
           fi
 
-          echo "AWS permissions that GitHub Actions is currently lacking:"
+          echo "🛑 AWS permissions that GitHub Actions is currently lacking:"
+          echo ""
           echo "$errors" | sed 's/^/  - /'
+          echo ""
           echo "If these are expected, please add them to estate-config/tofu/development/iam_actions.yml"
           exit 1
