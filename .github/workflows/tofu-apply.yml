@@ -192,18 +192,12 @@ jobs:
         run: |
           echo "Running tofu apply for environment: $ENVIRONMENT"
           cd ${{ matrix.environment }}
-          tofu apply tfplan | tee apply.txt
+          tofu apply tfplan 2>&1 | tee apply.txt
           exit_code=${PIPESTATUS[0]}
 
           echo "Finished processing environment: $ENVIRONMENT"
           echo "Exit code: $exit_code"
           echo "exit_code=$exit_code" >> "$GITHUB_OUTPUT"
-
-      - name: Debug apply.txt contents
-        run: |
-          cd ${{ matrix.environment }}
-          echo "== apply.txt =="
-          cat apply.txt
 
       - name: Analyse tofu errors
         id: tofu-errors
