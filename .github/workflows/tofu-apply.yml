@@ -99,6 +99,7 @@ jobs:
       QUAY_URL: ${{ vars.QUAY_URL }}
       TF_VAR_aws_apprunner_connection_arn: ${{ secrets.AWS_APPRUNNER_CONNECTION_ARN }}
       TF_VAR_aws_region: ${{ vars.AWS_REGION }}
+      TF_VAR_certificate_arn: ${{ vars.CERTIFICATE_ARN }}
       TF_VAR_cloudflare_account_id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       TF_VAR_cloudflare_zone_id: ${{ secrets.CLOUDFLARE_ZONE_ID }}
       TF_VAR_homepage_url: ${{ github.event.repository.homepage }}
