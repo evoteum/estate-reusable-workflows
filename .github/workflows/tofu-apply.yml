@@ -209,7 +209,7 @@ jobs:
         run: |
           echo "AWS permissions that GitHub Actions is currently lacking:"
           cd ${{ matrix.environment }}
-          cat plan.txt apply.txt | \
+          cat plan.txt apply.txt 2>/dev/null | \
             sed -n 's/.*is not authorized to perform: \([^ ]*\).*/\1/p' | \
             sort -u | sed 's/^/  - /'
 
