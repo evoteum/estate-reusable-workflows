@@ -199,6 +199,12 @@ jobs:
           echo "Exit code: $exit_code"
           echo "exit_code=$exit_code" >> "$GITHUB_OUTPUT"
 
+      - name: Debug apply.txt contents
+        run: |
+          cd ${{ matrix.environment }}
+          echo "== apply.txt =="
+          cat apply.txt
+
       - name: Analyse tofu errors
         id: tofu-errors
         if: steps.tofu-apply.outputs.exit_code != '0'
