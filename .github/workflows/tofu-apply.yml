@@ -204,3 +204,4 @@ jobs:
             sed -n 's/.*is not authorized to perform: \([a-zA-Z0-9:\*]*\).*/\1/p' | \
             sort -u | sed 's/^/  - /'
           echo "If these are expected, please add them to estate-config/tofu/development/iam_actions.yml
+          exit 1
