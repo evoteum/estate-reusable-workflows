@@ -188,8 +188,19 @@ jobs:
       - name: Apply OpenTofu plan
         id: tofu-apply
         if: steps.tofu-check-plan.outputs.changes == 'true'
+        continue-on-error: true
         run: |
           echo "Running tofu apply for environment: $ENVIRONMENT"
           cd ${{ matrix.environment }}
-          tofu apply tfplan
+          tofu apply tfplan | tee apply.txt
           echo "Finished processing environment: $ENVIRONMENT"
+
+      - name: Analyse tofu errors
+        if: steps.tofu-apply.outcome == 'failure'
+        id: tofu-errors
+        run: |
+          echo "AWS permissions that GitHub Actions is currently lacking:"
+          grep "is not authorized to perform" apply.txt | \
+            sed -n 's/.*is not authorized to perform: \([a-zA-Z0-9:\*]*\).*/\1/p' | \
+            sort -u | sed 's/^/  - /'
+          echo "If these are expected, please add them to estate-config/tofu/development/iam_actions.yml
