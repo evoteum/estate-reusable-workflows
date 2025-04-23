@@ -172,6 +172,11 @@ jobs:
           tofu plan -input=false -out=tfplan | tee plan.txt
           tofu show -json tfplan > tfplan.json
 
+      - name: Get plan result
+        run: |
+          echo "Result: ${{ steps.tofu-plan.result }}"
+          echo "Outcome: ${{ steps.tofu-plan.outcome }}"
+
       - name: Check OpenTofu Plan for changes
         id: tofu-check-plan
         run: |
@@ -202,7 +207,7 @@ jobs:
           echo "Outcome: ${{ steps.tofu-apply.outcome }}"
 
       - name: Analyse tofu errors
-        if: steps.tofu-apply.result == 'failure'
+        if: steps.tofu-apply.result == ''
         id: tofu-errors
         run: |
           echo "AWS permissions that GitHub Actions is currently lacking:"
