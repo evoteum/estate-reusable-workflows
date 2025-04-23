@@ -197,13 +197,7 @@ jobs:
 
           echo "Finished processing environment: $ENVIRONMENT"
           echo "Exit code: $exit_code"
-
-          # Set exit code as output
           echo "exit_code=$exit_code" >> "$GITHUB_OUTPUT"
-
-          # Still return success so job continues
-          exit 0
-
 
       - name: Analyse tofu errors
         id: tofu-errors
@@ -214,5 +208,5 @@ jobs:
           grep "is not authorized to perform" apply.txt | \
             sed -n 's/.*is not authorized to perform: \([a-zA-Z0-9:\*]*\).*/\1/p' | \
             sort -u | sed 's/^/  - /'
-          echo "If these are expected, please add them to estate-config/tofu/development/iam_actions.yml
+          echo "If these are expected, please add them to estate-config/tofu/development/iam_actions.yml"
           exit 1
