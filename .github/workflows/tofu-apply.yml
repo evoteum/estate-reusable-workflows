@@ -172,11 +172,6 @@ jobs:
           tofu plan -input=false -out=tfplan | tee plan.txt
           tofu show -json tfplan > tfplan.json
 
-      - name: Get plan result
-        run: |
-          echo "Result: ${{ steps.tofu-plan.result }}"
-          echo "Outcome: ${{ steps.tofu-plan.outcome }}"
-
       - name: Check OpenTofu Plan for changes
         id: tofu-check-plan
         run: |
@@ -198,17 +193,21 @@ jobs:
           echo "Running tofu apply for environment: $ENVIRONMENT"
           cd ${{ matrix.environment }}
           tofu apply tfplan | tee apply.txt
+          exit_code=${PIPESTATUS[0]}
+
           echo "Finished processing environment: $ENVIRONMENT"
+          echo "Exit code: $exit_code"
 
+          # Set exit code as output
+          echo "exit_code=$exit_code" >> "$GITHUB_OUTPUT"
 
-      - name: Get apply result
-        run: |
-          echo "Result: ${{ steps.tofu-apply.result }}"
-          echo "Outcome: ${{ steps.tofu-apply.outcome }}"
+          # Still return success so job continues
+          exit 0
+
 
       - name: Analyse tofu errors
-        if: steps.tofu-apply.result == ''
         id: tofu-errors
+        if: steps.tofu-apply.outputs.exit_code != '0'
         run: |
           echo "AWS permissions that GitHub Actions is currently lacking:"
           grep "is not authorized to perform" apply.txt | \
