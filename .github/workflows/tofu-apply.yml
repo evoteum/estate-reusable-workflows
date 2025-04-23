@@ -196,7 +196,7 @@ jobs:
           echo "Finished processing environment: $ENVIRONMENT"
 
       - name: Analyse tofu errors
-        if: steps.tofu-apply.outcome == 'failure'
+        if: steps.tofu-apply.result == 'failure'
         id: tofu-errors
         run: |
           echo "AWS permissions that GitHub Actions is currently lacking:"
