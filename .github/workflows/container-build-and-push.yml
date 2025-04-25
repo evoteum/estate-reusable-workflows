@@ -49,7 +49,7 @@ jobs:
           image: ${{ github.event.repository.name }}
           tags: |
             latest
-            ${{ github.sha }}
+            $(git rev-parse --short HEAD)
           containerfiles: |
             containerfiles/${{ vars.LANGUAGE }}/Containerfile
           build-args: |
