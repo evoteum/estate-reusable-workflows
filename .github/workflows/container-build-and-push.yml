@@ -46,7 +46,7 @@ jobs:
         id: build-image
         uses: redhat-actions/buildah-build@v2
         with:
-          image: quay.io/evoteum/${{ github.event.repository.name }}
+          image: ${{ github.event.repository.name }}
           tags: |
             latest
             ${{ github.sha }}
