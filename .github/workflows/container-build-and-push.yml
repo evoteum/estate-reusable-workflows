@@ -35,18 +35,6 @@ jobs:
             touch project/env.list
           fi
 
-      - name: Build Container Image with Podman
-        run: |
-          podman build -f containerfiles/${{ vars.LANGUAGE }}/Containerfile \
-            --build-arg LANGUAGE_VERSION=${{ vars.LANGUAGE_VERSION }} \
-            --build-arg APP_NAME=${{ vars.APP_NAME }} \
-            --build-arg BUILD_FLAGS="${{ vars.BUILD_FLAGS }}" \
-            --build-arg TARGET_OS=${{ vars.TARGET_OS }} \
-            --build-arg TARGET_ARCH=${{ vars.TARGET_ARCH }} \
-            --build-arg ENV_FILE=env.list \
-            -t ${{ vars.QUAY_REPOSITORY_PATH }}:latest \
-            project/${{ vars.SOURCE_PATH }}
-
       - name: Log in to Quay
         uses: redhat-actions/podman-login@v1
         with:
@@ -54,12 +42,32 @@ jobs:
           password: ${{ secrets.QUAY_ROBOT_PASSWORD }}
           registry: ${{ vars.QUAY_DOMAIN }}
 
-      - name: Tag and Push Image to Quay
-        run: |
-          SHORT_SHA=${GITHUB_SHA::7}
-          podman tag ${{ vars.QUAY_REPOSITORY_PATH }}:latest ${{ vars.QUAY_REPOSITORY_PATH }}:$SHORT_SHA
-          podman push --digestfile digest.txt ${{ vars.QUAY_REPOSITORY_PATH }}:latest
-          podman push ${{ vars.QUAY_REPOSITORY_PATH }}:$SHORT_SHA
+      - name: Build with Buildah
+        id: build-image
+        uses: redhat-actions/buildah-build@v2
+        with:
+          image: quay.io/evoteum/${{ github.event.repository.name }}
+          tags: |
+            latest
+            ${{ github.sha }}
+          containerfiles: |
+            containerfiles/${{ vars.LANGUAGE }}/Containerfile
+          build-args: |
+            LANGUAGE_VERSION=${{ vars.LANGUAGE_VERSION }}
+            APP_NAME=${{ vars.APP_NAME }}
+            BUILD_FLAGS=${{ vars.BUILD_FLAGS }}
+            TARGET_OS=${{ vars.TARGET_OS }}
+            TARGET_ARCH=${{ vars.TARGET_ARCH }}
+            ENV_FILE=env.list
+          context: project/${{ vars.SOURCE_PATH }}
+          oci: true
+          extra-args: |
+            --no-cache
 
-          echo "Image pushed with digest:"
-          cat digest.txt
+      - name: Push To quay.io
+        if: ${{ steps.build-image.outputs.image != '' }}
+        id: push-to-quay
+        uses: redhat-actions/push-to-registry@v2
+        with:
+          image: ${{ steps.build-image.outputs.image }}
+          tags: ${{ steps.build-image.outputs.tags }}
