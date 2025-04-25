@@ -46,7 +46,9 @@ jobs:
         id: short-sha
         run: |
           cd project
-          echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+          sha_short=$(git rev-parse --short HEAD)
+          echo "sha_short=$sha_short"
+          echo "sha_short=$sha_short" >> $GITHUB_OUTPUT
 
       - name: Build with Buildah
         if: ${{ steps.short-sha.outputs.sha_short != '' }}
