@@ -107,6 +107,7 @@ jobs:
       TF_VAR_language_version: ${{ vars.LANGUAGE_VERSION }}
       TF_VAR_organisation: ${{ github.repository_owner }}
       TF_VAR_permitted_environments: ${{ vars.PERMITTED_ENVIRONMENTS }}
+      TF_VAR_production_alb_dns_name: ${{ vars.PRODUCTION_ALB_DNS_NAME }}
       TF_VAR_quay_domain: ${{ vars.QUAY_DOMAIN }}
       TF_VAR_quay_repository_path: ${{ vars.QUAY_REPOSITORY_PATH }}
       TF_VAR_quay_url: ${{ vars.QUAY_URL }}
