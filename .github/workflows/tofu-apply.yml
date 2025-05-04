@@ -137,16 +137,6 @@ jobs:
           echo "TF_VAR_environment=$ENVIRONMENT" >> $GITHUB_ENV
           echo "STATE_FILE_KEY=${{ github.event.repository.name }}/$ENVIRONMENT/tofu.tfstate" >> $GITHUB_ENV
 
-          gh api -H "Accept: application/vnd.github+json" \
-            /repos/${{ github.repository }}/actions/variables \
-            --jq '.variables[] | "TF_VAR_\(.name | ascii_downcase)=\(.value)"' > .tofu.env
-
-          while IFS='=' read -r key value; do
-            echo "$key=$value" >> $GITHUB_ENV
-          done < .tofu.env
-          echo "Here's the env"
-          env
-
       - name: Set up OpenTofu
         uses: opentofu/setup-opentofu@v1
         with:
