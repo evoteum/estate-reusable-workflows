@@ -99,14 +99,20 @@ jobs:
       QUAY_URL: ${{ vars.QUAY_URL }}
 
     steps:
+      - name: Checkout this repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          sparse-checkout: |
+            ${{ matrix.environment }}
+            .github
+
       - name: set env vars
         run: |
           export ENVIRONMENT=$(basename "${{ matrix.environment }}")
           echo "ENVIRONMENT=$ENVIRONMENT" >> $GITHUB_ENV
           echo "TF_VAR_environment=$ENVIRONMENT" >> $GITHUB_ENV
           echo "STATE_FILE_KEY=${{ github.event.repository.name }}/$ENVIRONMENT/tofu.tfstate" >> $GITHUB_ENV
-
-          tree
 
           [[ -f .tofu.env ]] || { echo "No .tofu.env file found; skipping"; exit 0; }
           echo "Loading .tofu.env"
@@ -127,12 +133,6 @@ jobs:
           aws-region: ${{ vars.AWS_REGION }}
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           role-session-name: ${{ github.event.repository.name }}--${{ github.workflow }}--${{ github.run_number }}--${{ github.job }}
-
-      - name: Checkout this repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
-          sparse-checkout: ${{ matrix.environment }}
 
       - name: initialise tofu
         run: |
