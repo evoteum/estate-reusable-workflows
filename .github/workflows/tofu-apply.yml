@@ -127,6 +127,7 @@ jobs:
           echo "ENVIRONMENT=$ENVIRONMENT" >> $GITHUB_ENV
           echo "TF_VAR_environment=$ENVIRONMENT" >> $GITHUB_ENV
           echo "STATE_FILE_KEY=${{ github.event.repository.name }}/$ENVIRONMENT/tofu.tfstate" >> $GITHUB_ENV
+          env
 
       - name: Load TF_VARs from GitHub variables (repo + org fallback)
         run: |
@@ -148,7 +149,7 @@ jobs:
             # If not found, try organisation-level variable
             if [[ -z "$value" ]]; then
               echo "ℹ️  Not found at repo level, trying org level..."
-              value=$(gh variable get "$gha_var" --org "${{ github.repository_owner }}" --jq .value 2>/dev/null)
+              value=$(gh variable get "$gha_var" --org "$GITHUB_REPOSITORY_OWNER" --jq .value 2>/dev/null)
             fi
 
             if [[ -n "$value" ]]; then
