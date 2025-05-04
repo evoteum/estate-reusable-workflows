@@ -111,7 +111,7 @@ jobs:
           while IFS='=' read -r key value; do
             echo "found $key=$value"
             echo "$key=$value" >> "$GITHUB_ENV"
-          done < <(grep -v '^#' .github/.tofu.env | sed '/^\s*$/d')
+          done < <(grep -v '^#' .tofu.env | sed '/^\s*$/d')
 
       - name: Set up OpenTofu
         uses: opentofu/setup-opentofu@v1
