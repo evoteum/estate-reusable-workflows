@@ -106,6 +106,8 @@ jobs:
           echo "TF_VAR_environment=$ENVIRONMENT" >> $GITHUB_ENV
           echo "STATE_FILE_KEY=${{ github.event.repository.name }}/$ENVIRONMENT/tofu.tfstate" >> $GITHUB_ENV
 
+          tree
+
           [[ -f .tofu.env ]] || { echo "No .tofu.env file found; skipping"; exit 0; }
           echo "Loading .tofu.env"
           while IFS='=' read -r key value; do
