@@ -96,10 +96,13 @@ jobs:
       GITHUB_APP_PEM_FILE: ${{ secrets.EVOTEUMBOT_APP_PEM_FILE }}
       QUAY_OAUTH2_USERNAME: ${{ secrets.QUAY_OAUTH2_USERNAME }}
       QUAY_TOKEN: ${{ secrets.QUAY_TOKEN }}
+      QUAY_URL: ${{ vars.QUAY_URL }}
+
       TF_VAR_aws_apprunner_connection_arn: ${{ secrets.AWS_APPRUNNER_CONNECTION_ARN }}
       TF_VAR_certificate_arn: ${{ secrets.CERTIFICATE_ARN }}
       TF_VAR_cloudflare_account_id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       TF_VAR_cloudflare_zone_id: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+
       TF_VAR_homepage_url: ${{ github.event.repository.homepage }}
       TF_VAR_organisation: ${{ github.repository_owner }}
       TF_VAR_repo_name: ${{ github.event.repository.name }}
@@ -107,7 +110,19 @@ jobs:
       TF_VAR_repository_name: ${{ github.event.repository.name }}
       TF_VAR_repository_url: ${{ github.event.repository.html_url }}
 
-      QUAY_URL: ${{ vars.QUAY_URL }}
+      TF_VAR_aws_region: ${{ vars.AWS_REGION }}
+      TF_VAR_language: ${{ vars.LANGUAGE }}
+      TF_VAR_language_version: ${{ vars.LANGUAGE_VERSION }}
+      TF_VAR_permitted_environments: ${{ vars.PERMITTED_ENVIRONMENTS }}
+      TF_VAR_production_alb_dns_name: ${{ vars.PRODUCTION_ALB_DNS_NAME }}
+      TF_VAR_production_alb_https_listener_arn: ${{ vars.PRODUCTION_ALB_HTTPS_LISTENER_ARN }}
+      TF_VAR_quay_domain: ${{ vars.QUAY_DOMAIN }}
+      TF_VAR_quay_repository_path: ${{ vars.QUAY_REPOSITORY_PATH }}
+      TF_VAR_quay_url: ${{ vars.QUAY_URL }}
+      TF_VAR_repository_description: ${{ vars.REPOSITORY_DESCRIPTION }}
+      TF_VAR_repository_id: ${{ vars.REPOSITORY_ID }}
+      TF_VAR_repository_visibility: ${{ vars.REPOSITORY_VISIBILITY }}
+      TF_VAR_source_path: ${{ vars.SOURCE_PATH }}
 
 
     steps:
@@ -128,43 +143,6 @@ jobs:
           echo "TF_VAR_environment=$ENVIRONMENT" >> $GITHUB_ENV
           echo "STATE_FILE_KEY=${{ github.event.repository.name }}/$ENVIRONMENT/tofu.tfstate" >> $GITHUB_ENV
           env
-
-      - name: Load TF_VARs from GitHub variables (repo + org fallback)
-        run: |
-          if [[ ! -f .github/.tofu.env ]]; then
-            echo "No .tofu.env file found"
-            exit 1
-          fi
-
-          echo "Loading variables from .github/.tofu.env"
-
-          while IFS='=' read -r env_var gha_var; do
-            [[ -z "$env_var" || "$env_var" == \#* ]] && continue
-
-            echo "🔍 Looking up GitHub variable '$gha_var' for local var '$env_var'"
-
-            # Try repository-level variable first
-            value=$(gh variable get "$gha_var" --repo "$GITHUB_REPOSITORY" --jq .value 2>/dev/null)
-
-            # If not found, try organisation-level variable
-            if [[ -z "$value" ]]; then
-              echo "ℹ️  Not found at repo level, trying org level..."
-              value=$(gh variable get "$gha_var" --org "$GITHUB_REPOSITORY_OWNER" --jq .value 2>/dev/null)
-            fi
-
-            if [[ -n "$value" ]]; then
-              echo "✅ Setting $env_var"
-              echo "$env_var=$value" >> "$GITHUB_ENV"
-            else
-              echo "❌ GitHub variable '$gha_var' not found at repo or org level"
-              exit 1
-            fi
-          done < .github/.tofu.env
-          echo "Here's the env now:"
-          env
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
 
       - name: Set up OpenTofu
         uses: opentofu/setup-opentofu@v1
