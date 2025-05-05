@@ -119,6 +119,7 @@ jobs:
       TF_VAR_quay_domain: ${{ vars.QUAY_DOMAIN }}
       TF_VAR_quay_repository_path: ${{ vars.QUAY_REPOSITORY_PATH }}
       TF_VAR_quay_url: ${{ vars.QUAY_URL }}
+      TF_VAR_repository_archived: ${{ vars.REPOSITORY_ARCHIVED }}
       TF_VAR_repository_description: ${{ vars.REPOSITORY_DESCRIPTION }}
       TF_VAR_repository_id: ${{ vars.REPOSITORY_ID }}
       TF_VAR_repository_visibility: ${{ vars.REPOSITORY_VISIBILITY }}
