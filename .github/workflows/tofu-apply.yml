@@ -114,6 +114,7 @@ jobs:
       TF_VAR_repo_url: ${{ github.event.repository.html_url }}
       TF_VAR_repository_name: ${{ github.event.repository.name }}
       TF_VAR_repository_url: ${{ github.event.repository.html_url }}
+      TF_VAR_repository_visibility: ${{ github.event.repository.visibility }}
 
       TF_VAR_aws_region: ${{ vars.AWS_REGION }}
       TF_VAR_language: ${{ vars.LANGUAGE }}
@@ -127,7 +128,6 @@ jobs:
       TF_VAR_repository_archived: ${{ vars.REPOSITORY_ARCHIVED }}
       TF_VAR_repository_description: ${{ vars.REPOSITORY_DESCRIPTION }}
       TF_VAR_repository_id: ${{ vars.REPOSITORY_ID }}
-      TF_VAR_repository_visibility: ${{ vars.REPOSITORY_VISIBILITY }}
       TF_VAR_source_path: ${{ vars.SOURCE_PATH }}
 
 
