@@ -60,7 +60,7 @@ jobs:
             latest
             ${{ steps.short-sha.outputs.sha_short }}
           containerfiles: |
-            containerfiles/${{ vars.LANGUAGE }}/Containerfile
+            ../containerfiles/${{ vars.LANGUAGE }}/Containerfile
           build-args: |
             LANGUAGE_VERSION=${{ vars.LANGUAGE_VERSION }}
             APP_NAME=${{ vars.APP_NAME }}
