@@ -69,7 +69,7 @@ jobs:
             TARGET_OS=${{ vars.TARGET_OS }}
             TARGET_ARCH=${{ vars.TARGET_ARCH }}
             ENV_FILE=env.list
-          context: //{{ github.workspace }}/project/${{ vars.SOURCE_PATH }}
+          context: /{{ github.workspace }}/project/${{ vars.SOURCE_PATH }}
           oci: true
           extra-args: |
             --no-cache
