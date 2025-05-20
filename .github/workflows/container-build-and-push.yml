@@ -61,15 +61,15 @@ jobs:
             latest
             ${{ steps.short-sha.outputs.sha_short }}
           containerfiles: |
-            /${{ github.workspace }}/containerfiles/${{ vars.LANGUAGE }}/Containerfile
+            containerfiles/${{ vars.REPOSITORY_LANGUAGE }}/Containerfile
           build-args: |
-            LANGUAGE_VERSION=${{ vars.LANGUAGE_VERSION }}
+            LANGUAGE_VERSION=${{ vars.REPOSITORY_LANGUAGE_VERSION }}
             APP_NAME=${{ vars.APP_NAME }}
             BUILD_FLAGS=${{ vars.BUILD_FLAGS }}
             TARGET_OS=${{ vars.TARGET_OS }}
             TARGET_ARCH=${{ vars.TARGET_ARCH }}
             ENV_FILE=env.list
-          context: /{{ github.workspace }}/project/${{ vars.SOURCE_PATH }}
+          context: project/${{ vars.REPOSITORY_SOURCE_PATH }}
           oci: true
           extra-args: |
             --no-cache
