@@ -203,7 +203,7 @@ jobs:
             echo "changes=false" >> $GITHUB_OUTPUT
             exit 0
           fi
-          echo "Changes detected, lets a go!"
+          echo "Changes detected! Let's go, go, go, go, gooooo!"
           echo "changes=true" >> $GITHUB_OUTPUT
 
       - name: Apply OpenTofu plan
@@ -212,30 +212,6 @@ jobs:
         run: |
           echo "Running tofu apply for environment: $ENVIRONMENT"
           cd ${{ matrix.environment }}
-          tofu apply tfplan 2>&1 | tee apply.txt
+          tofu apply tfplan
 
           echo "Finished processing environment: $ENVIRONMENT"
-
-      - name: Analyse tofu errors
-        id: tofu-errors
-        if: always()
-        run: |
-          cd ${{ matrix.environment }}
-
-          errors=$(for file in plan.txt apply.txt; do
-            if [[ -f "$file" ]]; then
-              sed -n 's/.*is not authorized to perform: \([^ ]*\).*/\1/p' "$file"
-            fi
-          done | sort -u)
-
-          if ! [[ -n "$errors" ]]; then
-            echo "No tofu permission errors to report."
-            exit 0
-          fi
-
-          echo "🛑 AWS permissions that GitHub Actions is currently lacking:"
-          echo ""
-          echo "$errors" | sed 's/^/  - /'
-          echo ""
-          echo "If these are expected, please add them to estate-config/tofu/development/iam_actions.yml"
-          exit 1
