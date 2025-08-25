@@ -115,7 +115,7 @@ jobs:
       TF_VAR_repository_url: ${{ github.event.repository.html_url }}
       TF_VAR_repository_visibility: ${{ github.event.repository.visibility }}
 
-      TF_VAR_aws_region: ${{ vars.AWS_REGION || eu-west-2 }}
+      TF_VAR_aws_region: ${{ vars.AWS_REGION || 'eu-west-2' }}
       TF_VAR_language: ${{ vars.LANGUAGE }}
       TF_VAR_language_version: ${{ vars.LANGUAGE_VERSION }}
       TF_VAR_permitted_environments: ${{ vars.PERMITTED_ENVIRONMENTS }}
@@ -159,7 +159,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           audience: sts.amazonaws.com
-          aws-region: ${{ vars.AWS_REGION || eu-west-2 }}
+          aws-region: ${{ vars.AWS_REGION || 'eu-west-2' }}
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           role-session-name: ${{ github.event.repository.name }}--${{ github.workflow }}--${{ github.run_number }}--${{ github.job }}
 
@@ -172,7 +172,7 @@ jobs:
               -input=false \
               -backend-config="bucket=${{ secrets.TOFU_STATE_BUCKET_NAME }}" \
               -backend-config="key=$STATE_FILE_KEY" \
-              -backend-config="region=${{ vars.AWS_REGION || eu-west-2 }}"
+              -backend-config="region=${{ vars.AWS_REGION || 'eu-west-2' }}"
 
       - name: Run tofu tests
         id: tofu-test
