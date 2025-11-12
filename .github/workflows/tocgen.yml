@@ -1,0 +1,82 @@
+name: tocgen
+#  "Generate and Update Markdown TOCs"
+
+on:
+  workflow_call:
+    inputs:
+      config:
+        description: "Path to a custom YAML configuration file"
+        required: false
+        type: string
+
+      files:
+        description: "Space-separated list of Markdown files to update (default: all files containing TOC markers)"
+        required: false
+        type: string
+
+      start:
+        description: "Custom start marker text"
+        required: false
+        type: string
+
+      end:
+        description: "Custom end marker text"
+        required: false
+        type: string
+
+      indent:
+        description: "Indentation (number of spaces) per heading level"
+        required: false
+        type: string
+
+      min_level:
+        description: "Minimum heading level to include (1–6)"
+        required: false
+        type: string
+
+      max_level:
+        description: "Maximum heading level to include (1–6)"
+        required: false
+        type: string
+
+      list_style:
+        description: "List style: ordered, unordered, number, or bullet"
+        required: false
+        type: string
+
+jobs:
+  tocgen:
+    name: "Auto-generate Markdown TOCs"
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run TOC Generator
+        uses: evoteum/tocgen@main
+        with:
+          config: ${{ inputs.config }}
+          files: ${{ inputs.files }}
+          start: ${{ inputs.start }}
+          end: ${{ inputs.end }}
+          indent: ${{ inputs.indent }}
+          min_level: ${{ inputs.min_level }}
+          max_level: ${{ inputs.max_level }}
+          list_style: ${{ inputs.list_style }}
+
+      - name: Commit and push changes
+        run: |
+          if [[ -n "$(git status --porcelain)" ]]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add .
+            git commit -m "chore(docs): auto-update table of contents"
+            git push
+          else
+            echo "No changes detected."
+          fi
