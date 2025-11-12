@@ -44,6 +44,10 @@ on:
         required: false
         type: string
 
+permissions:
+  id-token: write
+  contents: write
+
 jobs:
   tocgen:
     name: "Auto-generate Markdown TOCs"
