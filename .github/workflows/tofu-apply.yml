@@ -193,19 +193,6 @@ jobs:
           tofu plan -input=false -out=tfplan 2>&1 | tee plan.txt
           tofu show -json tfplan > tfplan.json
 
-      - name: Check OpenTofu Plan for changes
-        id: tofu-check-plan
-        run: |
-          echo "Checking tofu plan for changes to environment:  ${{ github.event.repository.name }}/$ENVIRONMENT"
-          cd ${{ matrix.environment }}
-          if grep -q "No changes." plan.txt; then
-            echo "No changes detected, time for coffee"
-            echo "changes=false" >> $GITHUB_OUTPUT
-            exit 0
-          fi
-          echo "Changes detected! Let's go, go, go, go, gooooo!"
-          echo "changes=true" >> $GITHUB_OUTPUT
-
       - name: Apply OpenTofu plan
         id: tofu-apply
         if: steps.tofu-check-plan.outputs.changes == 'true'
