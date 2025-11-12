@@ -11,4 +11,4 @@ container-build-and-push:
 todo-to-issue:
   needs_todo_to_issue: true
 tocgen:
-  apply_to_all: true
+  tocgen: true
