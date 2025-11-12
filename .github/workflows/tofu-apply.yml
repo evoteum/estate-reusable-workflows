@@ -190,12 +190,11 @@ jobs:
           set -Eeuo pipefail
           echo "Building tofu plan for environment: ${{ github.event.repository.name }}/$ENVIRONMENT"
           cd ${{ matrix.environment }}
-          tofu plan -input=false -out=tfplan 2>&1 | tee plan.txt
+          tofu plan -input=false -out=tfplan
           tofu show -json tfplan > tfplan.json
 
       - name: Apply OpenTofu plan
         id: tofu-apply
-        if: steps.tofu-check-plan.outputs.changes == 'true'
         run: |
           echo "Running tofu apply for environment: $ENVIRONMENT"
           cd ${{ matrix.environment }}
