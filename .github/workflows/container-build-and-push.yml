@@ -24,7 +24,7 @@ jobs:
           repository: ${{ github.repository_owner }}/containerfiles
           ref: main
           sparse-checkout: |
-            ${{ vars.LANGUAGE }}
+            ${{ vars.REPOSITORY_LANGUAGE }}
           sparse-checkout-cone-mode: false
           path: containerfiles
 
@@ -43,7 +43,7 @@ jobs:
           password: ${{ secrets.QUAY_ROBOT_PASSWORD }}
           registry: ${{ vars.QUAY_DOMAIN }}
 
-      - name: Login to Docker Hub
+      - name: Login to Docker Hub to download images
         uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772  # v3.4.0
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
@@ -72,13 +72,13 @@ jobs:
             LANGUAGE_VERSION=${{ vars.REPOSITORY_LANGUAGE_VERSION }}
             APP_NAME=${{ vars.APP_NAME }}
             BUILD_FLAGS=${{ vars.BUILD_FLAGS }}
-            TARGET_OS=${{ vars.TARGET_OS }}
-            TARGET_ARCH=${{ vars.TARGET_ARCH }}
             ENV_FILE=env.list
           context: project/${{ vars.REPOSITORY_SOURCE_PATH }}
           oci: true
           extra-args: |
             --no-cache
+            --platform linux/amd64
+            --platform linux/arm64
 
       - name: Push To quay.io
         if: ${{ steps.build-image.outputs.image != '' }}
