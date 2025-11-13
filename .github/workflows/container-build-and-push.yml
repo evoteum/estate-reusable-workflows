@@ -78,7 +78,8 @@ jobs:
           extra-args: |
             --no-cache
             --platform linux/amd64
-            --platform linux/arm64
+
+# TODO add --platform linux/arm64 build
 
       - name: Push To quay.io
         if: ${{ steps.build-image.outputs.image != '' }}
