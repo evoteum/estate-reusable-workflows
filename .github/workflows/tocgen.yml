@@ -3,46 +3,6 @@ name: tocgen
 
 on:
   workflow_call:
-    inputs:
-      config:
-        description: "Path to a custom YAML configuration file"
-        required: false
-        type: string
-
-      files:
-        description: "Space-separated list of Markdown files to update (default: all files containing TOC markers)"
-        required: false
-        type: string
-
-      start:
-        description: "Custom start marker text"
-        required: false
-        type: string
-
-      end:
-        description: "Custom end marker text"
-        required: false
-        type: string
-
-      indent:
-        description: "Indentation (number of spaces) per heading level"
-        required: false
-        type: string
-
-      min_level:
-        description: "Minimum heading level to include (1–6)"
-        required: false
-        type: string
-
-      max_level:
-        description: "Maximum heading level to include (1–6)"
-        required: false
-        type: string
-
-      list_style:
-        description: "List style: ordered, unordered, number, or bullet"
-        required: false
-        type: string
 
 permissions:
   id-token: write
@@ -60,17 +20,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Run TOC Generator
+      - name: Run Table Of Contents Generator
         uses: evoteum/tocgen@main
-        with:
-          config: ${{ inputs.config }}
-          files: ${{ inputs.files }}
-          start: ${{ inputs.start }}
-          end: ${{ inputs.end }}
-          indent: ${{ inputs.indent }}
-          min_level: ${{ inputs.min_level }}
-          max_level: ${{ inputs.max_level }}
-          list_style: ${{ inputs.list_style }}
 
       - name: Commit and push changes
         run: |
