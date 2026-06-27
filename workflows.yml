@@ -5,6 +5,7 @@ container-build-and-push:
   artifact_type: container
   language:
     - go
+    - html
     - python
   source_path: EXISTS
   language_version: EXISTS
